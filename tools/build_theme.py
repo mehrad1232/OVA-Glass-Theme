@@ -75,13 +75,28 @@ def make_icon(bundle,kind):
  ov.putalpha(Image.composite(ov.getchannel("A"),Image.new("L",(S,S),0),m)); im=Image.alpha_composite(im,ov); glyph(ImageDraw.Draw(im),kind)
  im.resize((120,120),Image.Resampling.LANCZOS).save(ICONS/f"{bundle}.png",optimize=True)
 for bundle,(_,kind) in APPS.items(): make_icon(bundle,kind)
-W,H=640,1136; rng=random.Random(12058); wall=Image.new("RGB",(W,H)); pix=wall.load()
-for y in range(H):
- t=y/(H-1)
- for x in range(W):
-  g=max(0.0,1.0-math.sqrt(((x-115)/560)**2+((y-120)/650)**2)); base=(int(9+13*g+12*t),int(25+55*g+12*t),int(47+85*g+18*t)); n=rng.randrange(-5,6); pix[x,y]=tuple(max(0,min(255,c+n)) for c in base)
-wd=ImageDraw.Draw(wall,"RGBA"); wd.ellipse((-220,-260,430,390),fill=(142,218,255,28),outline=(225,248,255,70),width=3); wd.ellipse((360,600,900,1140),outline=(170,225,255,35),width=3); wd.rounded_rectangle((38,38,W-38,H-38),radius=48,outline=(225,245,255,60),width=2); wall.save(WALLS/"NOVA-Glass-iPhone5s.png",optimize=False)
-(THEME/"Wallpaper-Preview.html").write_text("""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NOVA Glass Preview</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#09192f;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif}body{background:linear-gradient(145deg,rgba(12,45,75,.15),rgba(5,13,27,.35)),url('Wallpapers/NOVA-Glass-iPhone5s.png') center/cover}.glass{position:absolute;left:8%;right:8%;top:20%;padding:24px;border:1px solid #ffffff55;border-radius:28px;background:#ffffff18;box-shadow:0 15px 45px #0005}#clock{font-size:58px;font-weight:200;letter-spacing:-3px}#date{opacity:.8;font-size:16px}.snow{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(2px 2px at 20% 30%,#fff9 99%,transparent),radial-gradient(2px 2px at 70% 60%,#fff8 99%,transparent);background-size:170px 190px;animation:fall 8s linear infinite}@keyframes fall{to{background-position:0 190px,0 190px}}</style></head><body><div class="glass"><div id="clock"></div><div id="date"></div></div><div class="snow" id="snow"></div><script>function tick(){const d=new Date(),h=d.getHours();document.getElementById('clock').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});document.getElementById('date').textContent=d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});document.getElementById('snow').style.opacity=(h>=7&&h<14)?'0':'1'}tick();setInterval(tick,1000);</script></body></html>""",encoding="utf-8")
+W,H=640,1136
+def make_wallpaper(filename, palette, seed, snow=False):
+ rng=random.Random(seed); wall=Image.new("RGB",(W,H)); pix=wall.load()
+ for y in range(H):
+  t=y/(H-1)
+  for x in range(W):
+   g=max(0.0,1.0-math.sqrt(((x-115)/560)**2+((y-120)/650)**2))
+   base=tuple(int(palette[i][0]+(palette[i][1]-palette[i][0])*g+(palette[i][2]-palette[i][0])*t) for i in range(3))
+   # Independent subtle per-channel grain keeps the full-resolution PNG genuinely detailed.
+   pix[x,y]=tuple(max(0,min(255,c+rng.randrange(-20,21))) for c in base)
+ d=ImageDraw.Draw(wall,"RGBA")
+ d.ellipse((-220,-260,430,390),fill=(142,218,255,28),outline=(225,248,255,70),width=3)
+ d.ellipse((360,600,900,1140),outline=(170,225,255,35),width=3)
+ d.rounded_rectangle((38,38,W-38,H-38),radius=48,outline=(225,245,255,60),width=2)
+ if snow:
+  for _ in range(180):
+   x=rng.randrange(W); y=rng.randrange(H); r=rng.choice((1,1,2))
+   d.ellipse((x-r,y-r,x+r,y+r),fill=(235,249,255,rng.randrange(90,220)))
+ wall.save(WALLS/filename,optimize=False)
+make_wallpaper("NOVA-Glass-Day-iPhone5s.png",((8,30,65),(28,105,150),(8,18,35)),12058,False)
+make_wallpaper("NOVA-Glass-Night-iPhone5s.png",((3,9,27),(16,37,76),(1,4,15)),12059,True)
+(THEME/"Wallpaper-Preview.html").write_text("""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NOVA Glass Preview</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#09192f;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif}body{background:linear-gradient(145deg,rgba(12,45,75,.15),rgba(5,13,27,.35)),url('Wallpapers/NOVA-Glass-Day-iPhone5s.png') center/cover}.glass{position:absolute;left:8%;right:8%;top:20%;padding:24px;border:1px solid #ffffff55;border-radius:28px;background:#ffffff18;box-shadow:0 15px 45px #0005}#clock{font-size:58px;font-weight:200;letter-spacing:-3px}#date{opacity:.8;font-size:16px}.snow{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(2px 2px at 20% 30%,#fff9 99%,transparent),radial-gradient(2px 2px at 70% 60%,#fff8 99%,transparent);background-size:170px 190px;animation:fall 8s linear infinite}@keyframes fall{to{background-position:0 190px,0 190px}}</style></head><body><div class="glass"><div id="clock"></div><div id="date"></div></div><div class="snow" id="snow"></div><script>function tick(){const d=new Date(),h=d.getHours();document.getElementById('clock').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});document.getElementById('date').textContent=d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});document.getElementById('snow').style.opacity=(h>=7&&h<14)?'0':'1'}tick();setInterval(tick,1000);</script></body></html>""",encoding="utf-8")
 with (THEME/"Info.plist").open("rb") as f: info=plistlib.load(f)
 info["ThemeVersion"]="2.0.0"; info["ThemeDescription"]="NOVA Glass icon pack for iOS 12, with 30 native PNG app icons and an iPhone 5s glass wallpaper."
 with (THEME/"Info.plist").open("wb") as f: plistlib.dump(info,f,sort_keys=False)
