@@ -104,5 +104,6 @@ with (THEME/"Info.plist").open("rb") as f: plistlib.load(f)
 icons=list(ICONS.glob("*.png")); assert len(icons)==len(APPS)
 for p in icons:
  with Image.open(p) as im: assert im.format=="PNG" and im.size==(120,120)
-with Image.open(WALLS/"NOVA-Glass-iPhone5s.png") as im: assert im.format=="PNG" and im.size==(640,1136)
+for name in ("NOVA-Glass-Day-iPhone5s.png","NOVA-Glass-Night-iPhone5s.png"):
+ with Image.open(WALLS/name) as im: assert im.format=="PNG" and im.size==(640,1136)
 print(f"VALID: {len(icons)} PNG icons; 640x1136 wallpaper; plist valid.")
