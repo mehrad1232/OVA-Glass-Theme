@@ -4,7 +4,7 @@ A SnowBoard icon theme and native-resolution wallpaper asset pack for jailbroken
 
 ## Included
 - 30 native PNG app icons in IconBundles, named by iOS bundle identifier
-- 640x1136 iPhone 5s wallpaper in Wallpapers
+- Two real 640x1136 iPhone 5s wallpapers (day and snowy night) in Wallpapers
 - Wallpaper-Preview.html with a glass clock preview and day/night snow toggle
 - Existing frosted-glass HTML concept and theme metadata
 - Build-time checks for plist validity, icon count, PNG dimensions, and package size
