@@ -16,29 +16,44 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Validate theme files
+      - name: Install image builder
+        run: python3 -m pip install --disable-pip-version-check Pillow
+      - name: Generate icons and wallpaper
+        run: python3 tools/build_theme.py
+      - name: Validate theme files and assets
         run: |
           test -f "NOVA Glass.theme/Info.plist"
           test -f "NOVA Glass.theme/Wallpaper.html"
+          test -f "NOVA Glass.theme/Wallpaper-Preview.html"
           test -f "NOVA Glass.theme/README.md"
           python3 - <<'PY'
           import plistlib
-          with open("NOVA Glass.theme/Info.plist", "rb") as f:
+          from pathlib import Path
+          from PIL import Image
+          root = Path("NOVA Glass.theme")
+          with (root / "Info.plist").open("rb") as f:
               plistlib.load(f)
-          print("Theme plist is valid.")
+          icons = list((root / "IconBundles").glob("*.png"))
+          assert len(icons) >= 25, f"Expected >=25 icons, got {len(icons)}"
+          for path in icons:
+              with Image.open(path) as im:
+                  assert im.format == "PNG" and im.size == (120, 120)
+          with Image.open(root / "Wallpapers/NOVA-Glass-iPhone5s.png") as im:
+              assert im.format == "PNG" and im.size == (640, 1136)
+          print(f"PASS: plist valid, {len(icons)} icons valid, wallpaper valid.")
           PY
-
       - name: Package theme
         run: |
           mkdir -p dist
-          zip -r "dist/NOVA-Glass-Theme-iOS12.zip" "NOVA Glass.theme"
-          sha256sum "dist/NOVA-Glass-Theme-iOS12.zip" > "dist/SHA256SUMS.txt"
-
+          zip -r -0 "dist/NOVA-Glass-Theme-iOS12-v2.0.zip" "NOVA Glass.theme"
+          SIZE=$(stat -c%s "dist/NOVA-Glass-Theme-iOS12-v2.0.zip")
+          echo "Package size: $SIZE bytes"
+          test "$SIZE" -ge 1800000
+          sha256sum "dist/NOVA-Glass-Theme-iOS12-v2.0.zip" > "dist/SHA256SUMS.txt"
       - name: Upload theme artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NOVA-Glass-Theme-iOS12
+          name: NOVA-Glass-Theme-iOS12-v2.0
           path: dist/*
           if-no-files-found: error
           retention-days: 30
