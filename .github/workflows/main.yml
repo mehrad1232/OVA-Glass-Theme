@@ -1,4 +1,4 @@
-name: Build OVA Glass Theme
+name: Build NOVA Glass Theme v3.0
 
 on:
   push:
@@ -18,43 +18,48 @@ jobs:
         uses: actions/checkout@v4
       - name: Install image builder
         run: python3 -m pip install --disable-pip-version-check Pillow
-      - name: Generate icons and wallpaper
+      - name: Generate complete glass artwork
         run: python3 tools/build_theme.py
-      - name: Validate theme files and assets
+      - name: Validate SnowBoard theme and high-resolution artwork
         run: |
-          test -f "NOVA Glass.theme/Info.plist"
-          test -f "NOVA Glass.theme/Wallpaper.html"
-          test -f "NOVA Glass.theme/Wallpaper-Preview.html"
-          test -f "NOVA Glass.theme/README.md"
           python3 - <<'PY'
           import plistlib
           from pathlib import Path
           from PIL import Image
           root = Path("NOVA Glass.theme")
           with (root / "Info.plist").open("rb") as f:
-              plistlib.load(f)
+              info = plistlib.load(f)
+          assert info["ThemeVersion"] == "3.0.0"
           icons = list((root / "IconBundles").glob("*.png"))
-          assert len(icons) >= 25, f"Expected >=25 icons, got {len(icons)}"
-          for path in icons:
-              with Image.open(path) as im:
-                  assert im.format == "PNG" and im.size == (120, 120)
-          for name in ("NOVA-Glass-Day-iPhone5s.png", "NOVA-Glass-Night-iPhone5s.png"):
-              with Image.open(root / "Wallpapers" / name) as im:
-                  assert im.format == "PNG" and im.size == (640, 1136)
-          print(f"PASS: plist valid, {len(icons)} icons valid, wallpaper valid.")
+          masters = list((root / "Artwork-Source" / "Icons").glob("*.png"))
+          wallpapers = list((root / "Wallpapers").glob("*.png"))
+          wall_masters = list((root / "Artwork-Source" / "Wallpapers").glob("*.png"))
+          assert len(icons) >= 70, f"Expected >=70 SnowBoard icons, got {len(icons)}"
+          assert len(masters) == len(icons), "Every active icon must have a source master"
+          assert len(wallpapers) == 6, f"Expected 6 iPhone wallpapers, got {len(wallpapers)}"
+          assert len(wall_masters) == 6, f"Expected 6 wallpaper masters, got {len(wall_masters)}"
+          for p in icons:
+              with Image.open(p) as im: assert im.format == "PNG" and im.size == (120, 120), p
+          for p in masters:
+              with Image.open(p) as im: assert im.format == "PNG" and im.size == (512, 512), p
+          for p in wallpapers:
+              with Image.open(p) as im: assert im.format == "PNG" and im.size == (640, 1136), p
+          for p in wall_masters:
+              with Image.open(p) as im: assert im.format == "PNG" and im.size == (1170, 2532), p
+          print(f"PASS: {len(icons)} active icons, {len(masters)} icon masters, 6 wallpapers, 6 wallpaper masters, plist v3.0.0.")
           PY
-      - name: Package theme
+      - name: Package theme and enforce genuine 50 MB artwork
         run: |
           mkdir -p dist
-          zip -r -0 "dist/NOVA-Glass-Theme-iOS12-v2.0.zip" "NOVA Glass.theme"
-          SIZE=$(stat -c%s "dist/NOVA-Glass-Theme-iOS12-v2.0.zip")
+          zip -r -0 "dist/NOVA-Glass-Theme-iOS12-v3.0.zip" "NOVA Glass.theme"
+          SIZE=$(stat -c%s "dist/NOVA-Glass-Theme-iOS12-v3.0.zip")
           echo "Package size: $SIZE bytes"
-          test "$SIZE" -ge 2000000
-          sha256sum "dist/NOVA-Glass-Theme-iOS12-v2.0.zip" > "dist/SHA256SUMS.txt"
+          test "$SIZE" -ge 50000000
+          sha256sum "dist/NOVA-Glass-Theme-iOS12-v3.0.zip" > "dist/SHA256SUMS.txt"
       - name: Upload theme artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NOVA-Glass-Theme-iOS12-v2.0
+          name: NOVA-Glass-Theme-iOS12-v3.0
           path: dist/*
           if-no-files-found: error
           retention-days: 30

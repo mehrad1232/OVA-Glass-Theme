@@ -1,27 +1,30 @@
-# NOVA Glass Theme v2.0
+# NOVA Glass Theme v3.0 — iOS 12 / SnowBoard
 
-A SnowBoard icon theme and native-resolution wallpaper asset pack for jailbroken iOS 12 devices, including iPhone 5s (640x1136).
+A genuine glass-style icon theme for jailbroken iOS 12 devices, designed and tested as a build artifact for iPhone 5s (640×1136).
 
-## Included
-- 30 native PNG app icons in IconBundles, named by iOS bundle identifier
-- Two real 640x1136 iPhone 5s wallpapers (day and snowy night) in Wallpapers
-- Wallpaper-Preview.html with a glass clock preview and day/night snow toggle
-- Existing frosted-glass HTML concept and theme metadata
-- Build-time checks for plist validity, icon count, PNG dimensions, and package size
+## What's actually included
+- 70+ SnowBoard-ready PNG icons in `NOVA Glass.theme/IconBundles`, each 120×120 and named by app bundle identifier.
+- 512×512 editable high-resolution icon masters in `NOVA Glass.theme/Artwork-Source/Icons`.
+- Six iPhone 5s wallpapers (day, golden, dusk, night, aurora, snow) at 640×1136.
+- Six 1170×2532 full-resolution wallpaper masters in `Artwork-Source/Wallpapers`.
+- SnowBoard theme metadata and a separate HTML visual preview.
 
-## Build
-GitHub Actions runs tools/build_theme.py, validates every generated PNG and creates NOVA-Glass-Theme-iOS12-v2.0.zip. The package is required to be at least 2,000,000 bytes (about 2 MB); this is real image content, not a padded placeholder.
+The high-resolution masters are real source artwork, not random padding. The SnowBoard-ready icon files are the 120×120 PNGs in IconBundles.
+
+## Build and artifact
+GitHub Actions runs `tools/build_theme.py`, validates the PNGs and plist, creates `NOVA-Glass-Theme-iOS12-v3.0.zip`, and checks that the ZIP is at least 50,000,000 bytes. The archive uses stored (uncompressed) PNG files, so its size is based on actual image assets.
 
 ## Install
-1. Download the NOVA-Glass-Theme-iOS12-v2.0 artifact from the successful GitHub Actions run.
-2. Extract NOVA Glass.theme.
-3. Copy the folder to /Library/Themes/ on the jailbroken device.
-4. Open SnowBoard, enable NOVA Glass, and respring if needed.
+1. Download the `NOVA-Glass-Theme-iOS12-v3.0` artifact from the successful Actions run.
+2. Extract the `NOVA Glass.theme` folder.
+3. Copy it to `/Library/Themes/` on the jailbroken iPhone.
+4. Enable NOVA Glass in SnowBoard and respring.
+5. Choose one of the six PNG wallpapers in Photos or Settings.
 
-## Compatibility notes
-- The icon files use common iOS stock bundle identifiers and standard PNG assets. SnowBoard's exact icon lookup can vary by iOS build and installed app bundle IDs; verify icons on-device.
-- The wallpaper PNG is a normal image asset. SnowBoard does not automatically turn an HTML file into a live wallpaper. Set the PNG as wallpaper using iOS Photos/Settings.
-- This package does not install Control Center, lock-screen, gesture, or ringtone tweaks. Those require separate iOS 12-compatible tweaks and are intentionally not misrepresented as included.
+## Compatibility limits — read before expecting system-wide changes
+- SnowBoard can apply icons when the installed app's bundle identifier matches a filename in IconBundles. Third-party bundle identifiers can differ by app version; unmatched apps keep their original icons.
+- This is an icon-and-wallpaper SnowBoard theme. It does **not** independently replace the Settings app's internal screens, system font, Control Center, lock-screen layout, gestures, or ringtone. Those require separate iOS 12.5.8-compatible SnowBoard extensions or jailbreak tweaks. Do not install random iOS 17-only packages on iOS 12.
+- The HTML preview is not an iOS live wallpaper. The included PNG wallpapers are normal static images.
 
-## Source
-The icon and wallpaper assets are generated locally by tools/build_theme.py with Pillow. No external copyrighted icon pack is bundled.
+## Build source
+All art is generated locally by `tools/build_theme.py` with Pillow. No proprietary icon pack or copyrighted font is bundled.
