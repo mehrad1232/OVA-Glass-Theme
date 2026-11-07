@@ -38,8 +38,9 @@ jobs:
           for path in icons:
               with Image.open(path) as im:
                   assert im.format == "PNG" and im.size == (120, 120)
-          with Image.open(root / "Wallpapers/NOVA-Glass-iPhone5s.png") as im:
-              assert im.format == "PNG" and im.size == (640, 1136)
+          for name in ("NOVA-Glass-Day-iPhone5s.png", "NOVA-Glass-Night-iPhone5s.png"):
+              with Image.open(root / "Wallpapers" / name) as im:
+                  assert im.format == "PNG" and im.size == (640, 1136)
           print(f"PASS: plist valid, {len(icons)} icons valid, wallpaper valid.")
           PY
       - name: Package theme
