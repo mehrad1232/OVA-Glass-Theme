@@ -10,7 +10,7 @@ A SnowBoard icon theme and native-resolution wallpaper asset pack for jailbroken
 - Build-time checks for plist validity, icon count, PNG dimensions, and package size
 
 ## Build
-GitHub Actions runs tools/build_theme.py, validates every generated PNG and creates NOVA-Glass-Theme-iOS12-v2.0.zip. The package is required to be at least 1.8 MB; this is real image content, not a padded placeholder.
+GitHub Actions runs tools/build_theme.py, validates every generated PNG and creates NOVA-Glass-Theme-iOS12-v2.0.zip. The package is required to be at least 2,000,000 bytes (about 2 MB); this is real image content, not a padded placeholder.
 
 ## Install
 1. Download the NOVA-Glass-Theme-iOS12-v2.0 artifact from the successful GitHub Actions run.
