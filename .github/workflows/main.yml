@@ -1,0 +1,44 @@
+name: Build OVA Glass Theme
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate theme files
+        run: |
+          test -f "NOVA Glass.theme/Info.plist"
+          test -f "NOVA Glass.theme/Wallpaper.html"
+          test -f "NOVA Glass.theme/README.md"
+          python3 - <<'PY'
+          import plistlib
+          with open("NOVA Glass.theme/Info.plist", "rb") as f:
+              plistlib.load(f)
+          print("Theme plist is valid.")
+          PY
+
+      - name: Package theme
+        run: |
+          mkdir -p dist
+          zip -r "dist/NOVA-Glass-Theme-iOS12.zip" "NOVA Glass.theme"
+          sha256sum "dist/NOVA-Glass-Theme-iOS12.zip" > "dist/SHA256SUMS.txt"
+
+      - name: Upload theme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOVA-Glass-Theme-iOS12
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
