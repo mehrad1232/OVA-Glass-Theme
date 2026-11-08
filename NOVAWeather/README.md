@@ -17,3 +17,5 @@ This rootful Theos tweak is a separate companion to the SnowBoard icon theme.
 
 ## Build
 Run make clean package FINALPACKAGE=1 with Theos and an iOS SDK installed. CI uses the macOS Theos toolchain to produce a rootful package. Physical-device testing is still required. The package uses the rootful iphoneos-arm Debian architecture.
+
+CI runs on the v4 build branch as well as main.
