@@ -2,7 +2,7 @@ name: Build NOVA Glass iOS 12 v4.0
 
 on:
   push:
-    branches: [main]
+    branches: [main, nova-glass-v4-ci]
   pull_request:
     branches: [main]
   workflow_dispatch:
