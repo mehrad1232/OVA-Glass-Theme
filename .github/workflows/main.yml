@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   package:
-    runs-on: macos-14
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -65,17 +65,16 @@ jobs:
           print(f"PASS: {len(icons)} SnowBoard icons, matching masters, 6 iPhone 5s wallpapers, 6 full-size masters, plist v4.0.0")
           PY
 
-      - name: Install macOS Theos dependencies
-        run: |
-          brew install make ldid dpkg rsync libplist libxml2 z3
-          echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
-          echo "THEOS=$GITHUB_WORKSPACE/theos" >> "$GITHUB_ENV"
+      - name: Refresh Ubuntu 22.04 package index
+        run: sudo apt-get update
 
-      - name: Download Theos and iOS SDKs
-        run: |
-          git clone --recursive https://github.com/theos/theos "$THEOS"
-          rm -rf "$THEOS/sdks"
-          git clone --depth 1 https://github.com/theos/sdks "$THEOS/sdks"
+      - name: Install Theos and iOS SDK
+        uses: Randomblock1/theos-action@v1
+        with:
+          theos-dir: ${{ github.workspace }}/theos
+          theos-src: https://github.com/theos/theos
+          theos-sdks: https://github.com/theos/sdks
+          theos-sdks-branch: master
 
       - name: Build rootful iOS 12 arm64 weather tweak
         working-directory: NOVAWeather
