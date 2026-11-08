@@ -147,7 +147,6 @@ def wallpaper(path, width, height, palette, seed, snow):
     if seed in (101,202):
         sx=int(width*.22); sy=int(height*.17); radius=int(width*.23)
         d.ellipse((sx-radius,sy-radius,sx+radius,sy+radius),fill=(255,225,155,28),outline=(255,247,220,72),width=max(1,width//320))
-        d.ellipse((sx-radius*.0,sy-radius*.0,sx+radius*.0,sy+radius*.0),fill=(255,245,205,0))
     if seed==505:
         for band in range(3):
             points=[]
