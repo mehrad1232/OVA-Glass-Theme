@@ -66,37 +66,57 @@ APPS=[
 # De-duplicate while retaining first canonical display entry.
 APPS=list(dict((a[0],a) for a in reversed(APPS)).values())[::-1]
 FONT_PATHS=["/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf","/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf"]
+GLASS_PALETTES=[
+    (34,128,180),(72,91,190),(20,147,154),(55,130,145),
+    (101,88,176),(35,155,130),(35,112,172),(120,95,170),
+    (26,141,178),(72,122,158),(43,156,170),(84,104,183)
+]
 def font(size):
     for p in FONT_PATHS:
         if Path(p).exists(): return ImageFont.truetype(p,size)
     return ImageFont.load_default()
 
-def glass_icon(bundle, label, initials, size=512):
+def app_color(bundle):
     seed=sum((i+1)*ord(c) for i,c in enumerate(bundle))
-    rng=random.Random(seed)
-    im=Image.new("RGB",(size,size))
+    return GLASS_PALETTES[seed % len(GLASS_PALETTES)]
+
+def glass_icon(bundle, label, initials, size=512):
+    color=app_color(bundle)
+    im=Image.new("RGBA",(size,size),(0,0,0,0))
     pix=im.load()
+    top=(max(0,color[0]//2),max(0,color[1]//2),max(0,color[2]//2))
+    bottom=(min(255,color[0]+42),min(255,color[1]+54),min(255,color[2]+62))
     for y in range(size):
-        ty=y/(size-1)
+        t=y/(size-1)
+        row=tuple(int(top[i]+(bottom[i]-top[i])*t) for i in range(3))
         for x in range(size):
-            glow=max(0,1-math.sqrt(((x-size*.27)/(size*.92))**2+((y-size*.12)/(size*.72))**2))
-            lower=max(0,min(1,ty))
-            base=(int(7+24*glow+8*lower),int(38+94*glow+18*lower),int(65+126*glow+24*lower))
-            n=rng.randint(-13,13)
-            pix[x,y]=tuple(max(0,min(255,v+n)) for v in base)
+            horizontal=max(0.0,1.0-abs(x-size*.5)/(size*.75))
+            lift=int(18*horizontal*(1-t))
+            pix[x,y]=(min(255,row[0]+lift),min(255,row[1]+lift),min(255,row[2]+lift),255)
+    mask=Image.new("L",(size,size),0)
+    md=ImageDraw.Draw(mask)
+    md.rounded_rectangle((2,2,size-3,size-3),radius=int(size*.22),fill=255)
+    im.putalpha(mask)
+    glow=Image.new("RGBA",(size,size),(0,0,0,0))
+    gd=ImageDraw.Draw(glow)
+    gd.ellipse((size*.08,size*.02,size*.92,size*.76),fill=(color[0],color[1],color[2],58))
+    glow=glow.filter(ImageFilter.GaussianBlur(max(2,int(size*.075))))
+    im=Image.alpha_composite(im,glow)
+    im.putalpha(mask)
     d=ImageDraw.Draw(im,"RGBA")
-    d.rounded_rectangle((5,5,size-6,size-6),radius=int(size*.22),outline=(225,248,255,210),width=max(2,size//90))
-    d.rounded_rectangle((size*.035,size*.035,size*.965,size*.43),radius=int(size*.20),fill=(255,255,255,24))
-    d.ellipse((size*.18,size*.17,size*.82,size*.81),fill=(220,246,255,22),outline=(226,249,255,115),width=max(2,size//100))
-    d.ellipse((size*.25,size*.24,size*.75,size*.74),outline=(255,255,255,65),width=max(2,size//160))
-    f=font(int(size*.25))
-    d.text((size/2,size*.49),initials,font=f,fill=(248,253,255,250),anchor="mm",stroke_width=max(1,size//300),stroke_fill=(160,220,255,120))
-    d.rounded_rectangle((size*.13,size*.84,size*.87,size*.89),radius=int(size*.025),fill=(225,248,255,65))
+    d.polygon([(size*.05,size*.07),(size*.95,size*.07),(size*.63,size*.34),(size*.17,size*.31)],fill=(255,255,255,30))
+    d.rounded_rectangle((size*.025,size*.025,size*.975,size*.975),radius=int(size*.22),outline=(231,249,255,220),width=max(2,size//85))
+    d.rounded_rectangle((size*.055,size*.055,size*.945,size*.945),radius=int(size*.19),outline=(255,255,255,95),width=max(1,size//150))
+    d.ellipse((size*.205,size*.205,size*.795,size*.795),fill=(255,255,255,20),outline=(235,250,255,145),width=max(2,size//95))
+    d.arc((size*.245,size*.225,size*.755,size*.735),190,330,fill=(255,255,255,155),width=max(2,size//90))
+    f=font(int(size*.245))
+    d.text((size/2,size*.49),initials,font=f,fill=(250,254,255,248),anchor="mm",stroke_width=max(1,size//260),stroke_fill=(color[0],color[1],color[2],190))
+    d.rounded_rectangle((size*.17,size*.835,size*.83,size*.89),radius=int(size*.025),fill=(238,250,255,72),outline=(255,255,255,70),width=max(1,size//220))
     return im
 
 for bundle,label,initials in APPS:
     master=glass_icon(bundle,label,initials,512)
-    master.save(MASTERS/"Icons"/(bundle+".png"),format="PNG",optimize=False)
+    master.save(MASTERS/"Icons"/(bundle+".png"),format="PNG",optimize=True)
     master.resize((120,120),Image.Resampling.LANCZOS).save(ICONS/(bundle+".png"),format="PNG",optimize=True)
 
 # Full-size 1170x2532 master art plus correctly sized 640x1136 iPhone 5s versions.
@@ -108,51 +128,105 @@ WALLSPECS=[
 ("NOVA-Glass-Aurora-iPhone5s.png","NOVA-Glass-Aurora-Master.png",((4,21,48),(22,100,111),(2,8,27)),505,True),
 ("NOVA-Glass-Snow-iPhone5s.png","NOVA-Glass-Snow-Master.png",((8,19,43),(53,82,119),(3,8,20)),606,True),
 ]
+def mix(a,b,t):
+    return tuple(int(a[i]+(b[i]-a[i])*t) for i in range(3))
+
 def wallpaper(path, width, height, palette, seed, snow):
     rng=random.Random(seed)
     im=Image.new("RGB",(width,height))
     p=im.load()
     for y in range(height):
         t=y/(height-1)
+        base=mix(palette[0],palette[1],min(1.0,t/0.48)) if t<0.48 else mix(palette[1],palette[2],(t-0.48)/0.52)
         for x in range(width):
-            glow=max(0,1-math.sqrt(((x-width*.22)/(width*.82))**2+((y-height*.12)/(height*.68))**2))
-            v=tuple(int(palette[i][0]+(palette[i][1]-palette[i][0])*glow+(palette[i][2]-palette[i][0])*t) for i in range(3))
-            grain=rng.randint(-18,18)
-            p[x,y]=tuple(max(0,min(255,c+grain)) for c in v)
-    d=ImageDraw.Draw(im,"RGBA")
-    d.ellipse((-width*.35,-height*.25,width*.68,height*.34),fill=(165,225,255,20),outline=(235,250,255,75),width=max(2,width//400))
-    d.ellipse((width*.48,height*.52,width*1.35,height*1.12),outline=(185,225,255,50),width=max(2,width//500))
-    d.rounded_rectangle((width*.055,height*.035,width*.945,height*.965),radius=int(width*.08),outline=(225,245,255,55),width=max(2,width//500))
+            gx=max(0.0,1.0-abs(x-width*.24)/(width*.82))
+            lift=int(28*gx*(1.0-t))
+            p[x,y]=(min(255,base[0]+lift),min(255,base[1]+lift),min(255,base[2]+lift))
+    overlay=Image.new("RGBA",(width,height),(0,0,0,0))
+    d=ImageDraw.Draw(overlay,"RGBA")
+    if seed in (101,202):
+        sx=int(width*.22); sy=int(height*.17); radius=int(width*.23)
+        d.ellipse((sx-radius,sy-radius,sx+radius,sy+radius),fill=(255,225,155,28),outline=(255,247,220,72),width=max(1,width//320))
+        d.ellipse((sx-radius*.0,sy-radius*.0,sx+radius*.0,sy+radius*.0),fill=(255,245,205,0))
+    if seed==505:
+        for band in range(3):
+            points=[]
+            for x in range(-width//8,width+width//8,8):
+                y=int(height*(.24+band*.09)+math.sin((x/width)*math.pi*2+band)*height*.035)
+                points.append((x,y))
+            d.line(points,fill=(65+band*22,210-band*18,220,40),width=max(4,width//35))
+    d.ellipse((-width*.38,-height*.24,width*.74,height*.42),outline=(235,250,255,65),width=max(2,width//360))
+    d.ellipse((width*.48,height*.54,width*1.35,height*1.14),outline=(185,225,255,48),width=max(2,width//420))
     if snow:
-        for _ in range(int(width*height/6000)):
+        count=max(50,int(width*height/7000))
+        for _ in range(count):
             x=rng.randrange(width); y=rng.randrange(height); r=rng.choice((1,1,2,max(2,width//900)))
-            d.ellipse((x-r,y-r,x+r,y+r),fill=(239,249,255,rng.randrange(95,225)))
-    im.save(path,format="PNG",optimize=False)
+            d.ellipse((x-r,y-r,x+r,y+r),fill=(239,249,255,rng.randrange(95,220)))
+    im=Image.alpha_composite(im.convert("RGBA"),overlay).convert("RGB")
+    im.save(path,format="PNG",optimize=True)
 
 for small,master,palette,seed,snow in WALLSPECS:
-    big=MASTERS/"Wallpapers"/master
-    wallpaper(big,1170,2532,palette,seed,snow)
+    wallpaper(MASTERS/"Wallpapers"/master,1170,2532,palette,seed,snow)
     wallpaper(WALLS/small,640,1136,palette,seed,snow)
 
-# Keep a truthful static preview: HTML animation is only a preview, not an iOS live wallpaper.
-(THEME/"Wallpaper-Preview.html").write_text("""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NOVA Glass Preview</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#06152b}body{background:url('Wallpapers/NOVA-Glass-Night-iPhone5s.png') center/cover}.glass{position:absolute;left:8%;right:8%;top:20%;padding:25px;border:1px solid #ffffff77;border-radius:30px;background:#ffffff20;backdrop-filter:blur(18px);box-shadow:0 18px 55px #0007}#clock{font-size:58px;font-weight:200;letter-spacing:-3px}#date{opacity:.85}.snow{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(2px 2px at 20% 30%,#fff9 99%,transparent),radial-gradient(2px 2px at 70% 60%,#fff8 99%,transparent);background-size:170px 190px;animation:fall 8s linear infinite}@keyframes fall{to{background-position:0 190px,0 190px}}</style></head><body><div class="glass"><div id="clock"></div><div id="date"></div></div><div class="snow"></div><script>function tick(){const d=new Date();document.getElementById('clock').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});document.getElementById('date').textContent=d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})}tick();setInterval(tick,1000)</script></body></html>""",encoding="utf-8")
+# This HTML is a desktop/browser preview only; the live SpringBoard effect is in NOVAWeather.
+(THEME/"Wallpaper-Preview.html").write_text("""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NOVA Glass Live Preview</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+body{background:linear-gradient(155deg,#183d62,#246f8d 45%,#07152b);transition:background 2s}
+body[data-mode="night"]{background:linear-gradient(155deg,#020814,#102447 55%,#01040c)}
+body[data-mode="dusk"]{background:linear-gradient(155deg,#27395d,#76506c 50%,#0a1228)}
+.sun{position:absolute;inset:-35% -15% auto;height:80%;background:radial-gradient(ellipse at 40% 45%,rgba(255,248,206,.88),rgba(255,211,126,.3) 30%,transparent 70%);filter:blur(12px);opacity:0;transition:opacity 2s}
+body[data-mode="day"] .sun{opacity:1}
+.glass{position:absolute;left:8%;right:8%;top:19%;height:38%;border:1px solid #ffffff80;border-radius:30px;background:linear-gradient(135deg,#ffffff28,#ffffff05);box-shadow:inset 0 1px 2px #ffffff66,0 18px 55px #0005;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:24px}
+#clock{font-size:58px;font-weight:200;letter-spacing:-3px}#date{opacity:.8}
+.snow{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.5s}
+body[data-mode="night"] .snow{opacity:1}
+.flake{position:absolute;top:-5%;width:3px;height:3px;border-radius:50%;background:#fff;box-shadow:0 0 8px #fff;animation:fall linear infinite}
+@keyframes fall{to{transform:translate3d(28px,115vh,0)}}
+</style></head>
+<body data-mode="night"><div class="sun"></div><div class="glass"><div id="clock"></div><div id="date"></div></div><div class="snow" id="snow"></div>
+<script>
+(function(){
+ var snow=document.getElementById('snow');
+ for(var i=0;i<42;i++){var f=document.createElement('i');f.className='flake';f.style.left=(Math.random()*100)+'%';f.style.animationDuration=(7+Math.random()*9)+'s';f.style.animationDelay=(-Math.random()*14)+'s';f.style.opacity=(.25+Math.random()*.75).toString();snow.appendChild(f);}
+ function tick(){var d=new Date(),h=d.getHours();document.body.dataset.mode=(h>=7&&h<14)?'day':(h>=19||h<7)?'night':'dusk';document.getElementById('clock').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});document.getElementById('date').textContent=d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});}
+ tick();setInterval(tick,60000);
+})();
+</script></body></html>""",encoding="utf-8")
+
+legacy=THEME/"Wallpaper.html"
+if legacy.exists(): legacy.unlink()
 
 plist=THEME/"Info.plist"
 with plist.open("rb") as f: info=plistlib.load(f)
+info["PackageName"]="NOVA Glass"
 info["ThemeName"]="NOVA Glass"
-info["ThemeVersion"]="3.0.0"
-info["ThemeDescription"]="NOVA Glass: 96 SnowBoard icon artworks, six iPhone 5s wallpapers, and 1170x2532 editable master artwork."
+info["ThemeType"]="Icons"
+info["ThemeVersion"]="4.0.0"
+info["ThemeDescription"]="Glossy glass icon artwork and six static wallpapers. Live time-based sunlight and snowfall require the separate NOVAWeather iOS 12 tweak."
 with plist.open("wb") as f: plistlib.dump(info,f,sort_keys=False)
 with plist.open("rb") as f: plistlib.load(f)
 
 icons=list(ICONS.glob("*.png"))
-assert len(icons)>=70, f"Expected at least 70 unique icons, got {len(icons)}"
-for p in icons:
-    with Image.open(p) as im: assert im.format=="PNG" and im.size==(120,120),p
-for p in WALLS.glob("*.png"):
-    with Image.open(p) as im: assert im.format=="PNG" and im.size==(640,1136),p
 masters=list((MASTERS/"Icons").glob("*.png"))
-assert len(masters)==len(icons)
-for p in (MASTERS/"Wallpapers").glob("*.png"):
+wallpapers=list(WALLS.glob("*.png"))
+wall_masters=list((MASTERS/"Wallpapers").glob("*.png"))
+assert len(icons)>=70, f"Expected at least 70 unique icons, got {len(icons)}"
+assert len(masters)==len(icons), "Every active icon must have a source master"
+assert len(wallpapers)==6 and len(wall_masters)==6
+for p in icons:
+    with Image.open(p) as im:
+        assert im.format=="PNG" and im.size==(120,120) and im.mode=="RGBA",p
+        assert im.getpixel((0,0))[3]==0, f"Icon corner must be transparent: {p}"
+for p in masters:
+    with Image.open(p) as im: assert im.format=="PNG" and im.size==(512,512) and im.mode=="RGBA",p
+for p in wallpapers:
+    with Image.open(p) as im: assert im.format=="PNG" and im.size==(640,1136),p
+for p in wall_masters:
     with Image.open(p) as im: assert im.format=="PNG" and im.size==(1170,2532),p
-print(f"PASS: {len(icons)} SnowBoard icons, {len(masters)} 512px icon masters, 6 iPhone 5s wallpapers, 6 full-size wallpaper masters.")
+assert not legacy.exists(), "Legacy Wallpaper.html must not be packaged as a SnowBoard live wallpaper"
+assert (THEME/"Wallpaper-Preview.html").exists()
+print(f"PASS: NOVA Glass v4.0.0; {len(icons)} transparent SnowBoard icons; 6 iPhone 5s wallpapers; 6 master wallpapers; preview only; legacy HTML removed.")
