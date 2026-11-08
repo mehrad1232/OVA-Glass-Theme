@@ -65,6 +65,9 @@ jobs:
           print(f"PASS: {len(icons)} SnowBoard icons, matching masters, 6 iPhone 5s wallpapers, 6 full-size masters, plist v4.0.0")
           PY
 
+      - name: Refresh Ubuntu package index
+        run: sudo apt-get update
+
       - name: Install Theos and iOS SDK
         uses: Randomblock1/theos-action@v1
         with:
