@@ -9,6 +9,7 @@
 @property (nonatomic, strong) CAEmitterLayer *snowLayer;
 @property (nonatomic, strong) NSTimer *weatherTimer;
 - (void)updateWeather;
+- (void)handleApplicationActive:(NSNotification *)notification;
 - (UIImage *)snowflakeImage;
 @end
 
@@ -73,7 +74,7 @@
     }];
     [[NSRunLoop mainRunLoop] addTimer:self.weatherTimer forMode:NSRunLoopCommonModes];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(updateWeather)
+                                             selector:@selector(handleApplicationActive:)
                                                  name:UIApplicationDidBecomeActiveNotification
                                                object:nil];
     return self;
@@ -120,6 +121,10 @@
     self.snowLayer.frame = self.bounds;
     self.snowLayer.emitterPosition = CGPointMake(CGRectGetMidX(self.bounds), 0.0);
     self.snowLayer.emitterSize = CGSizeMake(CGRectGetWidth(self.bounds), 1.0);
+}
+
+- (void)handleApplicationActive:(NSNotification *)notification {
+    [self updateWeather];
 }
 
 - (void)updateWeather {
