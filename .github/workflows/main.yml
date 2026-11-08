@@ -1,4 +1,4 @@
-name: Build NOVA Glass Theme v3.0
+name: Build NOVA Glass iOS 12 v4.0
 
 on:
   push:
@@ -16,11 +16,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install image builder
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install artwork builder
         run: python3 -m pip install --disable-pip-version-check Pillow
-      - name: Generate complete glass artwork
+
+      - name: Generate glass icons and wallpapers
         run: python3 tools/build_theme.py
-      - name: Validate SnowBoard theme and high-resolution artwork
+
+      - name: Validate theme assets and metadata
         run: |
           python3 - <<'PY'
           import plistlib
@@ -29,37 +37,87 @@ jobs:
           root = Path("NOVA Glass.theme")
           with (root / "Info.plist").open("rb") as f:
               info = plistlib.load(f)
-          assert info["ThemeVersion"] == "3.0.0"
+          assert info["ThemeVersion"] == "4.0.0"
+          assert info["ThemeType"] == "Icons"
+          assert info["PackageName"] == "NOVA Glass"
           icons = list((root / "IconBundles").glob("*.png"))
           masters = list((root / "Artwork-Source" / "Icons").glob("*.png"))
           wallpapers = list((root / "Wallpapers").glob("*.png"))
           wall_masters = list((root / "Artwork-Source" / "Wallpapers").glob("*.png"))
           assert len(icons) >= 70, f"Expected >=70 SnowBoard icons, got {len(icons)}"
-          assert len(masters) == len(icons), "Every active icon must have a source master"
-          assert len(wallpapers) == 6, f"Expected 6 iPhone wallpapers, got {len(wallpapers)}"
-          assert len(wall_masters) == 6, f"Expected 6 wallpaper masters, got {len(wall_masters)}"
+          assert len(masters) == len(icons), "Each active icon must have one master"
+          assert len(wallpapers) == 6 and len(wall_masters) == 6
+          assert not (root / "Wallpaper.html").exists(), "Do not package unsupported live HTML wallpaper"
+          assert (root / "Wallpaper-Preview.html").is_file()
           for p in icons:
-              with Image.open(p) as im: assert im.format == "PNG" and im.size == (120, 120), p
+              with Image.open(p) as im:
+                  assert im.format == "PNG" and im.size == (120, 120) and im.mode == "RGBA", p
+                  assert im.getpixel((0, 0))[3] == 0, f"Icon corner must be transparent: {p}"
           for p in masters:
-              with Image.open(p) as im: assert im.format == "PNG" and im.size == (512, 512), p
+              with Image.open(p) as im:
+                  assert im.format == "PNG" and im.size == (512, 512) and im.mode == "RGBA", p
           for p in wallpapers:
-              with Image.open(p) as im: assert im.format == "PNG" and im.size == (640, 1136), p
+              with Image.open(p) as im:
+                  assert im.format == "PNG" and im.size == (640, 1136), p
           for p in wall_masters:
-              with Image.open(p) as im: assert im.format == "PNG" and im.size == (1170, 2532), p
-          print(f"PASS: {len(icons)} active icons, {len(masters)} icon masters, 6 wallpapers, 6 wallpaper masters, plist v3.0.0.")
+              with Image.open(p) as im:
+                  assert im.format == "PNG" and im.size == (1170, 2532), p
+          print(f"PASS: {len(icons)} SnowBoard icons, matching masters, 6 iPhone 5s wallpapers, 6 full-size masters, plist v4.0.0")
           PY
-      - name: Package theme and enforce genuine 50 MB artwork
+
+      - name: Install Theos and iOS SDK
+        uses: Randomblock1/theos-action@v1
+        with:
+          theos-dir: theos
+          theos-src: https://github.com/theos/theos
+          theos-sdks: https://github.com/theos/sdks
+          theos-sdks-branch: master
+
+      - name: Build rootful iOS 12 arm64 weather tweak
+        working-directory: NOVAWeather
+        run: make clean package FINALPACKAGE=1
+
+      - name: Validate tweak package and assemble release ZIPs
         run: |
+          set -euo pipefail
+          DEB="$(find NOVAWeather/packages -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$DEB"
+          dpkg-deb --info "$DEB"
+          ARCH="$(dpkg-deb -f "$DEB" Architecture)"
+          PACKAGE="$(dpkg-deb -f "$DEB" Package)"
+          VERSION="$(dpkg-deb -f "$DEB" Version)"
+          test "$ARCH" = "iphoneos-arm"
+          test "$PACKAGE" = "com.nova.glass.weather"
+          test "$VERSION" = "1.0.0"
+          dpkg-deb --contents "$DEB" | grep -q "Library/MobileSubstrate/DynamicLibraries/NOVAWeather.dylib"
           mkdir -p dist
-          zip -r -0 "dist/NOVA-Glass-Theme-iOS12-v3.0.zip" "NOVA Glass.theme"
-          SIZE=$(stat -c%s "dist/NOVA-Glass-Theme-iOS12-v3.0.zip")
-          echo "Package size: $SIZE bytes"
-          test "$SIZE" -ge 50000000
-          sha256sum "dist/NOVA-Glass-Theme-iOS12-v3.0.zip" > "dist/SHA256SUMS.txt"
-      - name: Upload theme artifact
+          cp "$DEB" dist/NOVAWeather.deb
+          zip -r -9 dist/NOVA-Glass-Theme-iOS12-v4.0.zip "NOVA Glass.theme"
+          cat > dist/INSTALL.txt <<'TXT'
+          NOVA Glass v4.0 — iPhone 5s / iOS 12.5.8
+          
+          1. Copy the NOVA Glass.theme folder to /Library/Themes/.
+          2. Install NOVAWeather.deb in Sileo or Zebra.
+          3. Enable NOVA Glass in SnowBoard and respring.
+          4. Choose one of the included PNG wallpapers.
+          
+          Sunlight: 07:00–13:59 local time.
+          Snow: 19:00–06:59 local time.
+          14:00–18:59: no effect.
+          
+          The HTML file is a browser preview only. The live effect is the separate SpringBoard tweak.
+          CI verifies generated assets and builds the package; physical-device runtime testing is still required.
+          TXT
+          zip -r -9 dist/NOVA-Glass-iOS12-v4.0.zip "NOVA Glass.theme" dist/NOVAWeather.deb dist/INSTALL.txt
+          unzip -t dist/NOVA-Glass-Theme-iOS12-v4.0.zip
+          unzip -t dist/NOVA-Glass-iOS12-v4.0.zip
+          sha256sum dist/NOVA-Glass-Theme-iOS12-v4.0.zip dist/NOVAWeather.deb dist/NOVA-Glass-Theme-iOS12-v4.0.zip > dist/SHA256SUMS.txt
+          ls -lh dist
+
+      - name: Upload v4.0 install artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NOVA-Glass-Theme-iOS12-v3.0
+          name: NOVA-Glass-iOS12-v4.0
           path: dist/*
           if-no-files-found: error
           retention-days: 30
