@@ -80,6 +80,130 @@ def app_color(bundle):
     seed=sum((i+1)*ord(c) for i,c in enumerate(bundle))
     return GLASS_PALETTES[seed % len(GLASS_PALETTES)]
 
+def draw_symbol(d,label,size,color):
+    cx=size/2; cy=size*.49; u=size*.22; w=max(3,size//32)
+    white=(250,254,255,235); soft=(230,248,255,190)
+    def line(points,width=w): d.line(points,fill=white,width=width,joint="curve")
+    if label in ("Safari","Compass"):
+        d.ellipse((cx-u,cy-u,cx+u,cy+u),outline=white,width=w)
+        d.polygon([(cx,cy-u*.72),(cx+u*.22,cy+u*.12),(cx-u*.12,cy+u*.48),(cx-u*.05,cy-u*.05)],fill=(255,255,255,225))
+        d.polygon([(cx,cy+u*.72),(cx-u*.22,cy-u*.12),(cx+u*.12,cy-u*.48),(cx+u*.05,cy+u*.05)],fill=(110,210,255,200))
+    elif label in ("Mail","Gmail","Outlook"):
+        d.rounded_rectangle((cx-u*1.15,cy-u*.72,cx+u*1.15,cy+u*.72),radius=int(u*.16),outline=white,width=w)
+        line([(cx-u*1.05,cy-u*.58),(cx,cy+u*.12),(cx+u*1.05,cy-u*.58)])
+    elif label in ("Phone",):
+        d.arc((cx-u,cy-u,cx+u,cy+u),35,225,fill=white,width=w*2)
+        d.rounded_rectangle((cx-u*.82,cy-u*.82,cx-u*.38,cy-u*.38),radius=int(u*.15),fill=white)
+        d.rounded_rectangle((cx+u*.38,cy+u*.38,cx+u*.82,cy+u*.82),radius=int(u*.15),fill=white)
+    elif label in ("Messages","WhatsApp","Telegram","Discord","Slack","Facebook"):
+        d.rounded_rectangle((cx-u*1.1,cy-u*.72,cx+u*1.1,cy+u*.55),radius=int(u*.3),outline=white,width=w)
+        d.polygon([(cx-u*.45,cy+u*.52),(cx-u*.72,cy+u*.9),(cx+u*.02,cy+u*.55)],fill=white)
+        for k in (-.42,0,.42): d.ellipse((cx+u*k-u*.09,cy-u*.08,cx+u*k+u*.09,cy+u*.1),fill=white)
+    elif label in ("Settings",):
+        d.ellipse((cx-u*.72,cy-u*.72,cx+u*.72,cy+u*.72),outline=white,width=w*2)
+        d.ellipse((cx-u*.28,cy-u*.28,cx+u*.28,cy+u*.28),outline=white,width=w*2)
+        for a in range(0,360,45):
+            r1=u*.78; r2=u*1.12
+            x1=cx+math.cos(math.radians(a))*r1; y1=cy+math.sin(math.radians(a))*r1
+            x2=cx+math.cos(math.radians(a))*r2; y2=cy+math.sin(math.radians(a))*r2
+            line([(x1,y1),(x2,y2)],w*2)
+    elif label in ("Camera","FaceTime"):
+        d.rounded_rectangle((cx-u*1.1,cy-u*.58,cx+u*1.1,cy+u*.62),radius=int(u*.2),outline=white,width=w)
+        d.ellipse((cx-u*.38,cy-u*.38,cx+u*.38,cy+u*.38),outline=white,width=w*2)
+        if label=="FaceTime": d.polygon([(cx+u*.95,cy-u*.3),(cx+u*1.45,cy-u*.58),(cx+u*1.45,cy+u*.58),(cx+u*.95,cy+u*.3)],outline=white)
+    elif label in ("Photos",):
+        for a in range(0,360,60):
+            x=cx+math.cos(math.radians(a))*u*.48; y=cy+math.sin(math.radians(a))*u*.48
+            d.ellipse((x-u*.43,y-u*.43,x+u*.43,y+u*.43),fill=(255,255,255,115),outline=soft,width=max(2,w//2))
+    elif label in ("Music","Spotify","Podcasts","iTunes","iTunes Store","GarageBand"):
+        if label=="Podcasts":
+            d.ellipse((cx-u,cy-u,cx+u,cy+u),outline=white,width=w)
+            d.ellipse((cx-u*.55,cy-u*.55,cx+u*.55,cy+u*.55),outline=white,width=w)
+            d.ellipse((cx-u*.16,cy-u*.16,cx+u*.16,cy+u*.16),fill=white)
+        else:
+            line([(cx+u*.15,cy-u*.9),(cx+u*.15,cy+u*.45)],w*2)
+            line([(cx+u*.15,cy-u*.9),(cx+u*.9,cy-u*1.05)],w*2)
+            d.ellipse((cx-u*.62,cy+u*.22,cx+u*.16,cy+u*.82),fill=white)
+            d.ellipse((cx-u*.08,cy+u*.08,cx+u*.7,cy+u*.68),fill=white)
+    elif label in ("Calendar",):
+        d.rounded_rectangle((cx-u,cy-u,cx+u,cy+u),radius=int(u*.15),outline=white,width=w)
+        line([(cx-u,cy-u*.45),(cx+u,cy-u*.45)],w*2)
+        for x in (-.45,0,.45):
+            for y in (-.05,.42): d.ellipse((cx+u*x-u*.07,cy+u*y-u*.07,cx+u*x+u*.07,cy+u*y+u*.07),fill=white)
+    elif label in ("Maps",):
+        d.polygon([(cx-u*1.1,cy-u*.8),(cx-u*.35,cy-u*.55),(cx+u*.35,cy-u*.8),(cx+u*1.1,cy-u*.55),(cx+u*1.1,cy+u*.8),(cx+u*.35,cy+u*.55),(cx-u*.35,cy+u*.8),(cx-u*1.1,cy+u*.55)],outline=white)
+        line([(cx-u*.35,cy-u*.55),(cx-u*.35,cy+u*.8)],w)
+        line([(cx+u*.35,cy-u*.8),(cx+u*.35,cy+u*.55)],w)
+        line([(cx-u*.7,cy+u*.3),(cx-u*.1,cy-u*.15),(cx+u*.4,cy+u*.18)],w*2)
+    elif label in ("Weather",):
+        d.ellipse((cx-u*.45,cy-u*.85,cx+u*.45,cy+u*.05),fill=(255,231,150,225))
+        d.arc((cx-u*1.1,cy-u*.3,cx+u*.9,cy+u*1.1),180,360,fill=white,width=w*2)
+        d.line((cx-u*.9,cy+u*.45,cx+u*.85,cy+u*.45),fill=white,width=w*2)
+    elif label in ("App Store","Apple Store"):
+        line([(cx-u*.8,cy+u*.8),(cx+u*.8,cy-u*.8)],w*2)
+        line([(cx-u*.8,cy-u*.8),(cx+u*.8,cy+u*.8)],w*2)
+        line([(cx-u*.95,cy+u*.2),(cx+u*.95,cy+u*.2)],w*2)
+    elif label in ("Calculator",):
+        d.rounded_rectangle((cx-u,cy-u,cx+u,cy+u),radius=int(u*.15),outline=white,width=w)
+        for x in (-.35,.35):
+            for y in (-.3,.25,.7): d.ellipse((cx+u*x-u*.11,cy+u*y-u*.11,cx+u*x+u*.11,cy+u*y+u*.11),fill=white)
+    elif label in ("Voice Memos",):
+        for i,h in enumerate((.25,.55,.9,.45,.72,.35,.6)):
+            x=cx-u*.9+i*u*.3
+            line([(x,cy-u*h),(x,cy+u*h)],w*2)
+    elif label in ("Stocks",):
+        line([(cx-u,cy+u*.65),(cx-u*.45,cy+u*.1),(cx-u*.05,cy+u*.3),(cx+u*.45,cy-u*.55),(cx+u,cy-u*.2)],w*2)
+        for x,y in ((-1,.65),(-.45,.1),(-.05,.3),(.45,-.55),(1,-.2)):
+            d.ellipse((cx+u*x-u*.08,cy+u*y-u*.08,cx+u*x+u*.08,cy+u*y+u*.08),fill=white)
+    elif label in ("Reminders",):
+        for y in (-.55,0,.55):
+            d.ellipse((cx-u,cy+u*y-u*.12,cx-u+u*.24,cy+u*y+u*.12),outline=white,width=w)
+            line([(cx-u*.55,cy+u*y),(cx+u,cy+u*y)],w*2)
+    elif label in ("Notes","Files","Passwords","Translate","Tips"):
+        d.rounded_rectangle((cx-u*.8,cy-u,cx+u*.8,cy+u),radius=int(u*.12),outline=white,width=w)
+        if label=="Tips":
+            d.ellipse((cx-u*.35,cy-u*.55,cx+u*.35,cy+u*.15),outline=white,width=w*2)
+            line([(cx-u*.2,cy+u*.25),(cx+u*.2,cy+u*.25)],w*2)
+            line([(cx-u*.15,cy+u*.48),(cx+u*.15,cy+u*.48)],w*2)
+        else:
+            for y in (-.45,0,.45): line([(cx-u*.45,cy+u*y),(cx+u*.45,cy+u*y)],w)
+    elif label in ("Books",):
+        d.polygon([(cx,cy-u*.8),(cx-u,cy-u),(cx-u,cy+u*.8),(cx,cy+u),(cx,cy-u*.8),(cx+u,cy-u),(cx+u,cy+u*.8),(cx,cy+u)],outline=white)
+        line([(cx,cy-u*.8),(cx,cy+u)],w)
+    elif label in ("Find My",):
+        for radius in (u*.35,u*.7,u*1.05): d.ellipse((cx-radius,cy-radius,cx+radius,cy+radius),outline=white,width=max(2,w//2))
+        d.ellipse((cx-u*.12,cy-u*.12,cx+u*.12,cy+u*.12),fill=white)
+    elif label in ("Clock",):
+        d.ellipse((cx-u,cy-u,cx+u,cy+u),outline=white,width=w*2)
+        line([(cx,cy),(cx,cy-u*.62)],w*2); line([(cx,cy),(cx+u*.55,cy+u*.15)],w*2)
+    elif label in ("Health",):
+        pts=[(cx,cy+u*.9),(cx-u*1.0,cy-u*.05),(cx-u*.8,cy-u*.75),(cx-u*.25,cy-u*.7),(cx,cy-u*.25),(cx+u*.25,cy-u*.7),(cx+u*.8,cy-u*.75),(cx+u,cy-u*.05)]
+        d.polygon(pts,fill=(255,255,255,205))
+    elif label in ("Home",):
+        d.polygon([(cx-u*1.15,cy),(cx,cy-u),(cx+u*1.15,cy),(cx+u*.85,cy+u),(cx-u*.85,cy+u)],outline=white)
+        d.rectangle((cx-u*.25,cy+u*.15,cx+u*.25,cy+u),outline=white,width=w)
+    elif label in ("Wallet",):
+        d.rounded_rectangle((cx-u*1.1,cy-u*.65,cx+u*1.1,cy+u*.65),radius=int(u*.15),outline=white,width=w)
+        d.rounded_rectangle((cx+u*.25,cy-u*.25,cx+u*1.1,cy+u*.25),radius=int(u*.1),outline=white,width=w)
+        d.ellipse((cx+u*.45,cy-u*.06,cx+u*.58,cy+u*.06),fill=white)
+    elif label in ("Shortcuts",):
+        d.polygon([(cx-u,cy),(cx-u*.35,cy-u*.75),(cx+u*.3,cy),(cx-u*.35,cy+u*.75)],outline=white)
+        d.polygon([(cx-u*.1,cy),(cx+u*.55,cy-u*.75),(cx+u,cy),(cx+u*.55,cy+u*.75)],outline=white)
+    elif label in ("Measure",):
+        d.rounded_rectangle((cx-u*1.1,cy-u*.35,cx+u*1.1,cy+u*.35),radius=int(u*.1),outline=white,width=w)
+        for i in range(7):
+            x=cx-u*.9+i*u*.3
+            line([(x,cy-u*.3),(x,cy-u*(.08 if i%2 else .18))],w)
+    elif label in ("Videos","TV","iMovie","Game Center"):
+        d.rounded_rectangle((cx-u,cy-u*.7,cx+u,cy+u*.7),radius=int(u*.16),outline=white,width=w)
+        d.polygon([(cx-u*.25,cy-u*.38),(cx+u*.45,cy),(cx-u*.25,cy+u*.38)],fill=white)
+    elif label in ("Contacts",):
+        d.ellipse((cx-u*.32,cy-u*.85,cx+u*.32,cy-u*.2),outline=white,width=w*2)
+        d.arc((cx-u,cy-u*.15,cx+u,cy+u),180,360,fill=white,width=w*2)
+    else:
+        return False
+    return True
+
 def glass_icon(bundle, label, initials, size=512):
     color=app_color(bundle)
     im=Image.new("RGBA",(size,size),(0,0,0,0))
@@ -106,8 +230,9 @@ def glass_icon(bundle, label, initials, size=512):
     d.rounded_rectangle((size*.055,size*.055,size*.945,size*.945),radius=int(size*.19),outline=(255,255,255,95),width=max(1,size//150))
     d.ellipse((size*.205,size*.205,size*.795,size*.795),fill=(255,255,255,20),outline=(235,250,255,145),width=max(2,size//95))
     d.arc((size*.245,size*.225,size*.755,size*.735),190,330,fill=(255,255,255,155),width=max(2,size//90))
-    f=font(int(size*.245))
-    d.text((size/2,size*.49),initials,font=f,fill=(250,254,255,248),anchor="mm",stroke_width=max(1,size//260),stroke_fill=(color[0],color[1],color[2],190))
+    if not draw_symbol(d,label,size,color):
+        f=font(int(size*.245))
+        d.text((size/2,size*.49),initials,font=f,fill=(250,254,255,248),anchor="mm",stroke_width=max(1,size//260),stroke_fill=(color[0],color[1],color[2],190))
     d.rounded_rectangle((size*.17,size*.835,size*.83,size*.89),radius=int(size*.025),fill=(238,250,255,72),outline=(255,255,255,70),width=max(1,size//220))
     return im
 
