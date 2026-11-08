@@ -2,12 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+  <key>PackageName</key>
+  <string>NOVA Glass</string>
   <key>ThemeName</key>
   <string>NOVA Glass</string>
+  <key>ThemeType</key>
+  <string>Icons</string>
   <key>ThemeVersion</key>
-  <string>1.0.0</string>
+  <string>4.0.0</string>
   <key>ThemeDescription</key>
-  <string>Frosted glass visuals with a daylight glow and night snowfall wallpaper for iOS 12.</string>
+  <string>Glossy glass icon artwork and six static wallpapers. Live time-based sunlight and snowfall require the separate NOVAWeather iOS 12 tweak.</string>
   <key>Author</key>
   <string>NOVA</string>
 </dict>
