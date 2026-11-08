@@ -16,4 +16,4 @@ This rootful Theos tweak is a separate companion to the SnowBoard icon theme.
 - If SBFStaticWallpaperView changes in a jailbreak/SpringBoard build, the tweak will not attach. Disable or uninstall the package to recover; it has no preference pane or safe-mode dependency.
 
 ## Build
-Run make clean package FINALPACKAGE=1 with Theos and an iOS SDK installed. CI uses the macOS Theos toolchain to produce a rootful package. Physical-device testing is still required.
+Run make clean package FINALPACKAGE=1 with Theos and an iOS SDK installed. CI uses the macOS Theos toolchain to produce a rootful package. Physical-device testing is still required. The package uses the rootful iphoneos-arm Debian architecture.
