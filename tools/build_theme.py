@@ -83,16 +83,13 @@ def app_color(bundle):
 def glass_icon(bundle, label, initials, size=512):
     color=app_color(bundle)
     im=Image.new("RGBA",(size,size),(0,0,0,0))
-    pix=im.load()
     top=(max(0,color[0]//2),max(0,color[1]//2),max(0,color[2]//2))
     bottom=(min(255,color[0]+42),min(255,color[1]+54),min(255,color[2]+62))
+    gradient=ImageDraw.Draw(im)
     for y in range(size):
         t=y/(size-1)
         row=tuple(int(top[i]+(bottom[i]-top[i])*t) for i in range(3))
-        for x in range(size):
-            horizontal=max(0.0,1.0-abs(x-size*.5)/(size*.75))
-            lift=int(18*horizontal*(1-t))
-            pix[x,y]=(min(255,row[0]+lift),min(255,row[1]+lift),min(255,row[2]+lift),255)
+        gradient.line((0,y,size,y),fill=(*row,255))
     mask=Image.new("L",(size,size),0)
     md=ImageDraw.Draw(mask)
     md.rounded_rectangle((2,2,size-3,size-3),radius=int(size*.22),fill=255)
@@ -134,14 +131,11 @@ def mix(a,b,t):
 def wallpaper(path, width, height, palette, seed, snow):
     rng=random.Random(seed)
     im=Image.new("RGB",(width,height))
-    p=im.load()
+    gradient=ImageDraw.Draw(im)
     for y in range(height):
         t=y/(height-1)
         base=mix(palette[0],palette[1],min(1.0,t/0.48)) if t<0.48 else mix(palette[1],palette[2],(t-0.48)/0.52)
-        for x in range(width):
-            gx=max(0.0,1.0-abs(x-width*.24)/(width*.82))
-            lift=int(28*gx*(1.0-t))
-            p[x,y]=(min(255,base[0]+lift),min(255,base[1]+lift),min(255,base[2]+lift))
+        gradient.line((0,y,width,y),fill=base)
     overlay=Image.new("RGBA",(width,height),(0,0,0,0))
     d=ImageDraw.Draw(overlay,"RGBA")
     if seed in (101,202):
