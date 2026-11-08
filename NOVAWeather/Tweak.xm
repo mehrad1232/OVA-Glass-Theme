@@ -9,6 +9,7 @@
 @property (nonatomic, strong) CAEmitterLayer *snowLayer;
 @property (nonatomic, strong) NSTimer *weatherTimer;
 - (void)updateWeather;
+- (UIImage *)snowflakeImage;
 @end
 
 @implementation NOVAWeatherOverlayView
