@@ -68,7 +68,6 @@ jobs:
       - name: Install Theos and iOS SDK
         uses: Randomblock1/theos-action@v1
         with:
-          theos-dir: theos
           theos-src: https://github.com/theos/theos
           theos-sdks: https://github.com/theos/sdks
           theos-sdks-branch: master
@@ -108,10 +107,14 @@ jobs:
           The HTML file is a browser preview only. The live effect is the separate SpringBoard tweak.
           CI verifies generated assets and builds the package; physical-device runtime testing is still required.
           TXT
-          zip -r -9 dist/NOVA-Glass-iOS12-v4.0.zip "NOVA Glass.theme" dist/NOVAWeather.deb dist/INSTALL.txt
+          mkdir -p bundle
+          cp -R "NOVA Glass.theme" bundle/
+          cp dist/NOVAWeather.deb bundle/
+          cp dist/INSTALL.txt bundle/
+          (cd bundle && zip -r -9 ../dist/NOVA-Glass-iOS12-v4.0.zip "NOVA Glass.theme" NOVAWeather.deb INSTALL.txt)
           unzip -t dist/NOVA-Glass-Theme-iOS12-v4.0.zip
           unzip -t dist/NOVA-Glass-iOS12-v4.0.zip
-          sha256sum dist/NOVA-Glass-Theme-iOS12-v4.0.zip dist/NOVAWeather.deb dist/NOVA-Glass-Theme-iOS12-v4.0.zip > dist/SHA256SUMS.txt
+          sha256sum dist/NOVA-Glass-Theme-iOS12-v4.0.zip dist/NOVAWeather.deb dist/NOVA-Glass-iOS12-v4.0.zip > dist/SHA256SUMS.txt
           ls -lh dist
 
       - name: Upload v4.0 install artifact
