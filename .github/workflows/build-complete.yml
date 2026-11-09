@@ -33,6 +33,23 @@ jobs:
         run: |
           python3 tools/build_theme.py
           python3 tools/build_complete_artwork.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import plistlib
+          from PIL import Image
+          root=Path("NOVA Glass.theme")
+          with (root/"Info.plist").open("rb") as f: info=plistlib.load(f)
+          icons=list((root/"IconBundles").glob("*.png"))
+          settings=list((root/"Bundles"/"com.apple.preferences-framework").glob("*.png"))
+          walls=list((root/"Wallpapers").glob("*.png"))
+          assert info.get("ThemeType")=="Icons" and info.get("PackageName")=="NOVA Glass"
+          assert len(icons)>=70, f"Need at least 70 icon bundles, got {len(icons)}"
+          assert len(settings)>=30, f"Need 2x/3x Settings icons, got {len(settings)}"
+          assert len(walls)==6, f"Need six wallpapers, got {len(walls)}"
+          for p in icons:
+              with Image.open(p) as im: assert im.size==(120,120), p
+          print(f"PASS: {len(icons)} app icons, {len(settings)} Settings assets, {len(walls)} wallpapers.")
+          PY
 
       - name: Generate original NOVA ringtone
         run: |
@@ -42,13 +59,15 @@ jobs:
 
       - name: Install Theos
         run: |
-          git clone --depth 1 https://github.com/theos/theos.git "$GITHUB_WORKSPACE/theos"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$GITHUB_WORKSPACE/theos"
           echo "THEOS=$GITHUB_WORKSPACE/theos" >> "$GITHUB_ENV"
 
-      - name: Stage ringtone into Debian package
+      - name: Stage all installable assets into the Debian package
         run: |
           mkdir -p "NOVAWeather/layout/Library/Ringtones"
+          mkdir -p "NOVAWeather/layout/Library/Themes"
           cp dist/NOVA-Glass-Ringtone.m4r "NOVAWeather/layout/Library/Ringtones/NOVA Glass.m4r"
+          cp -R "NOVA Glass.theme" "NOVAWeather/layout/Library/Themes/NOVA Glass.theme"
 
       - name: Compile rootful iOS 12 tweak
         working-directory: NOVAWeather
