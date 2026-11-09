@@ -2,39 +2,61 @@
 #import <Preferences/PSListController.h>
 #import <Preferences/PSSpecifier.h>
 
+static NSString * const kNOVAPrefsSuite = @"com.nova.glass.weather";
+static NSString * const kNOVAEnabledKey = @"com.nova.glass.enabled";
+static NSString * const kNOVASunEnabledKey = @"com.nova.glass.sun.enabled";
+static NSString * const kNOVASnowEnabledKey = @"com.nova.glass.snow.enabled";
+
 @interface NOVAWeatherPrefsController : PSListController
 @end
 
 @implementation NOVAWeatherPrefsController
 - (NSArray *)specifiers {
     if (!_specifiers) {
-        NSMutableArray *items=[NSMutableArray array];
-        PSSpecifier *group=[PSSpecifier preferenceSpecifierNamed:@"NOVA GLASS"
-            target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
-        [items addObject:group];
-        PSSpecifier *enabled=[PSSpecifier preferenceSpecifierNamed:@"Enable weather effects"
+        NSMutableArray *items = [NSMutableArray array];
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"NOVA GLASS"
+            target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil]];
+
+        PSSpecifier *master = [PSSpecifier preferenceSpecifierNamed:@"Enable NOVA effects"
             target:self set:@selector(setPreferenceValue:specifier:)
             get:@selector(readPreferenceValue:)
             detail:nil cell:PSSwitchCell edit:nil];
-        [enabled setProperty:@"com.nova.glass.enabled" forKey:@"key"];
-        [enabled setProperty:@YES forKey:@"default"];
-        [items addObject:enabled];
-        PSSpecifier *info=[PSSpecifier preferenceSpecifierNamed:@"Sunlight: 07:00–13:59"
-            target:nil set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil];
-        [items addObject:info];
-        PSSpecifier *snow=[PSSpecifier preferenceSpecifierNamed:@"Snowfall: 14:00–06:59"
-            target:nil set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil];
+        [master setProperty:kNOVAEnabledKey forKey:@"key"];
+        [master setProperty:@YES forKey:@"default"];
+        [items addObject:master];
+
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"WEATHER"
+            target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil]];
+
+        PSSpecifier *sun = [PSSpecifier preferenceSpecifierNamed:@"Daylight glow (07:00–13:59)"
+            target:self set:@selector(setPreferenceValue:specifier:)
+            get:@selector(readPreferenceValue:)
+            detail:nil cell:PSSwitchCell edit:nil];
+        [sun setProperty:kNOVASunEnabledKey forKey:@"key"];
+        [sun setProperty:@YES forKey:@"default"];
+        [items addObject:sun];
+
+        PSSpecifier *snow = [PSSpecifier preferenceSpecifierNamed:@"Night snowfall (14:00–06:59)"
+            target:self set:@selector(setPreferenceValue:specifier:)
+            get:@selector(readPreferenceValue:)
+            detail:nil cell:PSSwitchCell edit:nil];
+        [snow setProperty:kNOVASnowEnabledKey forKey:@"key"];
+        [snow setProperty:@YES forKey:@"default"];
         [items addObject:snow];
-        _specifiers=[items copy];
+
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"Changes apply immediately"
+            target:nil set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil]];
+        _specifiers = [items copy];
     }
     return _specifiers;
 }
 - (id)readPreferenceValue:(PSSpecifier *)specifier {
-    id value=[[[NSUserDefaults alloc] initWithSuiteName:@"com.nova.glass.weather"] objectForKey:[specifier propertyForKey:@"key"]];
+    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:kNOVAPrefsSuite];
+    id value = [prefs objectForKey:[specifier propertyForKey:@"key"]];
     return value ?: [specifier propertyForKey:@"default"];
 }
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
-    NSUserDefaults *prefs=[[NSUserDefaults alloc] initWithSuiteName:@"com.nova.glass.weather"];
+    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:kNOVAPrefsSuite];
     [prefs setObject:value forKey:[specifier propertyForKey:@"key"]];
     [prefs synchronize];
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(),
