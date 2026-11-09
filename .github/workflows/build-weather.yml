@@ -1,0 +1,37 @@
+name: Build NOVA Glass Weather Tweak
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "NOVAWeather/**"
+      - ".github/workflows/build-weather.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Theos dependencies
+        run: brew install ldid
+      - name: Install Theos
+        run: |
+          git clone --depth 1 https://github.com/theos/theos.git "$GITHUB_WORKSPACE/theos"
+          echo "THEOS=$GITHUB_WORKSPACE/theos" >> "$GITHUB_ENV"
+      - name: Build rootful iOS 12 package
+        working-directory: NOVAWeather
+        run: |
+          export THEOS="$GITHUB_WORKSPACE/theos"
+          make package FINALPACKAGE=1
+      - name: Upload Debian package
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOVA-Glass-Weather-iOS12-deb
+          path: NOVAWeather/packages/*.deb
+          if-no-files-found: error
+          retention-days: 30
