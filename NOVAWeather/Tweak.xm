@@ -116,6 +116,34 @@ static void NOVAInstallOverlay(UIView *host, NSInteger tag, BOOL weather) {
     [host addSubview:overlay];
 }
 
+%group NOVAIconGlass
+%hook SBIconImageView
+- (void)layoutSubviews {
+    %orig;
+    CALayer *glass=nil;
+    for (CALayer *candidate in self.layer.sublayers) {
+        if ([candidate.name isEqualToString:@"com.nova.glass.icon-sheen"]) { glass=candidate; break; }
+    }
+    if (!glass) {
+        CAGradientLayer *sheen=[CAGradientLayer layer];
+        sheen.name=@"com.nova.glass.icon-sheen";
+        sheen.colors=@[(id)[UIColor colorWithWhite:1 alpha:.17].CGColor,
+                       (id)[UIColor colorWithWhite:1 alpha:.015].CGColor,
+                       (id)[UIColor colorWithWhite:1 alpha:.035].CGColor];
+        sheen.locations=@[@0,@.42,@1];
+        sheen.startPoint=CGPointMake(.1,0); sheen.endPoint=CGPointMake(.9,1);
+        sheen.borderColor=[UIColor colorWithWhite:1 alpha:.30].CGColor;
+        sheen.borderWidth=1.0;
+        [self.layer addSublayer:sheen];
+        glass=sheen;
+    }
+    glass.frame=self.bounds;
+    glass.cornerRadius=self.layer.cornerRadius>0?self.layer.cornerRadius:18;
+    glass.masksToBounds=YES;
+}
+%end
+%end
+
 %group NOVAHome
 %hook SpringBoard
 - (void)applicationDidFinishLaunching:(id)application {
@@ -154,7 +182,7 @@ static void NOVAInstallOverlay(UIView *host, NSInteger tag, BOOL weather) {
 %ctor {
     @autoreleasepool {
         if (objc_getClass("SpringBoard")) %init(NOVAHome);
-        if (objc_getClass("SBLockScreenViewController")) %init(NOVALockScreen);
+        if (objc_getClass("CSCoverSheetViewController")) %init(NOVALockScreen);\n        else if (objc_getClass("SBLockScreenViewController")) %init(NOVALockScreen);\n        if (objc_getClass("SBIconImageView")) %init(NOVAIconGlass);
         if (objc_getClass("CCUIControlCenterViewController")) %init(NOVAControlCenter);
     }
 }
