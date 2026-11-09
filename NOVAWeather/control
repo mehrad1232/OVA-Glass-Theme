@@ -1,8 +1,8 @@
 Package: com.nova.glass.weather
 Name: NOVA Glass Weather Effects
-Version: 1.0.0
+Version: 1.0.1
 Architecture: iphoneos-arm
-Description: Time-aware sunlight and snowfall overlay for NOVA Glass on legacy iOS.
+Description: Interactive, time-aware sunlight and snowfall overlays for NOVA Glass on legacy iOS.
 Maintainer: NOVA
 Author: NOVA
 Section: Tweaks
