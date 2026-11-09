@@ -13,10 +13,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: nova-glass-complete-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
   build-complete:
     runs-on: macos-14
@@ -88,12 +84,10 @@ jobs:
           cat > dist/NOVA-Glass-Full/INSTALL.txt <<'EOF'
           NOVA GLASS — iPhone 5s / iOS 12.5.8 / rootful jailbreak
 
-          1. Back up your device and existing theme before installing.
-          2. Copy NOVA Glass.theme to /Library/Themes/.
-          3. Install the NOVAWeather .deb from Packages/ using Sileo.
-          4. Enable NOVA Glass in SnowBoard and respring.
-          5. Import NOVA-Glass-Ringtone.m4r with a ringtone manager that supports iOS 12.
-          6. Set the tone in Settings > Sounds.
+          1. Back up your device before installing.
+          2. Install the single .deb in Packages/ using Sileo. It includes the theme, tweak, preference pane and ringtone.
+          3. Enable NOVA Glass in SnowBoard and respring if needed.
+          4. Select NOVA Glass in Settings > Sounds if iOS has registered the ringtone.
 
           The tweak uses private SpringBoard classes. Compilation is not proof of runtime safety.
           If SpringBoard enters a respring loop, remove com.nova.glass.weather from Sileo/SSH.
