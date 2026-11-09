@@ -30,12 +30,13 @@
     return _specifiers;
 }
 - (id)readPreferenceValue:(PSSpecifier *)specifier {
-    id value=[[NSUserDefaults standardUserDefaults] objectForKey:[specifier propertyForKey:@"key"]];
+    id value=[[[NSUserDefaults alloc] initWithSuiteName:@"com.nova.glass.weather"] objectForKey:[specifier propertyForKey:@"key"]];
     return value ?: [specifier propertyForKey:@"default"];
 }
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
-    [[NSUserDefaults standardUserDefaults] setObject:value forKey:[specifier propertyForKey:@"key"]];
-    [[NSUserDefaults standardUserDefaults] synchronize];
+    NSUserDefaults *prefs=[[NSUserDefaults alloc] initWithSuiteName:@"com.nova.glass.weather"];
+    [prefs setObject:value forKey:[specifier propertyForKey:@"key"]];
+    [prefs synchronize];
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(),
         CFSTR("com.nova.glass/preferences-changed"), NULL, NULL, true);
 }
