@@ -11,4 +11,13 @@ NOVAWeather_FRAMEWORKS = UIKit QuartzCore
 NOVAWeather_PLIST = NOVAWeather.plist
 NOVAWeather_LDFLAGS += -Wl,-segalign,4000
 
+BUNDLE_NAME = NOVAWeatherPrefs
+NOVAWeatherPrefs_FILES = NOVAWeatherPrefs.m
+NOVAWeatherPrefs_INSTALL_PATH = /Library/PreferenceBundles
+NOVAWeatherPrefs_FRAMEWORKS = UIKit
+NOVAWeatherPrefs_PRIVATE_FRAMEWORKS = Preferences
+NOVAWeatherPrefs_CFLAGS = -fobjc-arc
+NOVAWeatherPrefs_INFOPLIST = Resources/Info.plist
+
 include $(THEOS_MAKE_PATH)/tweak.mk
+include $(THEOS_MAKE_PATH)/bundle.mk
