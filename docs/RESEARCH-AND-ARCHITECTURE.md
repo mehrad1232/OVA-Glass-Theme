@@ -1,76 +1,28 @@
 # NOVA Glass — technical research and implementation notes
 
-Target hardware/software: iPhone 5s (arm64), iOS 12.5.8, rootful Amethyst jailbreak, Sileo, SnowBoard.
+Target: iPhone 5s, iOS 12.5.8, rootful Amethyst, Sileo and SnowBoard.
 
-## 1. Architecture
+## Runtime behavior
 
-NOVA Glass is split into three installable parts, assembled into one ZIP by GitHub Actions:
+- The weather overlay is attached to the SpringBoard icon controller's own view, inserted behind its content. This keeps the effect on the Home Screen rather than whichever window happens to be key while SpringBoard launches.
+- The Lock Screen receives only a restrained, touch-through glass treatment.
+- The full-screen Control Center overlay was removed so Control Center controls remain visible and usable.
+- All overlays are non-interactive and inserted behind host content.
+- Preferences are stored in the `com.nova.glass.weather` defaults suite and broadcast through a Darwin notification. Changes apply immediately without a respring.
 
-1. **SnowBoard theme** — app icons, Settings icons and static wallpapers.
-2. **NOVAWeather Debian tweak** — a Theos/Logos Objective-C tweak injected into SpringBoard. It draws a time-aware overlay and subtle glass treatment on supported SpringBoard surfaces.
-3. **NOVA ringtone** — an original short audio composition generated from source code and converted to AAC/M4R. The unified build stages it in `/Library/Ringtones` inside the Debian package.
+## Settings
 
-The complete workflow packages the theme, tweak and ringtone together. The source project remains editable.
+Settings → NOVA Glass exposes three switches:
+- Enable NOVA effects
+- Daylight glow (07:00–13:59)
+- Night snowfall (14:00–06:59)
 
-## 2. Why rootful arm64
+The schedule follows the device's local clock. Each weather switch can be controlled independently.
 
-The iPhone 5s uses 64-bit ARM (arm64) and iOS 12.5.8. This project targets the classic rootful jailbreak filesystem. It does not use the modern rootless `/var/jb` layout: Theos documents rootless as a newer scheme that targets iOS 15+ devices. The Makefile therefore sets `ARCHS = arm64`, an iOS 12 deployment target and ordinary rootful install paths.
+## Build and installation
 
-## 3. SnowBoard theme format
+The GitHub Actions workflow builds the rootful arm64 package for iOS 12 and packages the SnowBoard theme and ringtone with it. Install the newly generated `.deb` in Sileo as an upgrade. Back up the device first.
 
-SnowBoard themes use a folder ending in `.theme`, with an `IconBundles` directory and an `Info.plist`. The plist declares `PackageName` and `ThemeType = Icons`. Icon image names are bundle identifiers, so an icon only applies when the installed app's identifier matches.
+## Compatibility note
 
-iOS 12 Settings icons are placed under `Bundles/com.apple.preferences-framework`; regular iPhone models such as iPhone 5s use 58x58 @2x and 87x87 @3x assets. SnowBoard's Settings Icons extension is needed to apply those assets.
-
-The artwork generator draws app-specific pictograms (phone, messages, camera, mail, maps, music, etc.) on a shared glass visual system. It does not use a font letter/monogram as the icon artwork. Third-party app identifiers are best-effort and can vary by app release.
-
-## 4. Theos and Logos
-
-Theos is the build system. Logos is the hook preprocessor used to replace/extend Objective-C methods through MobileSubstrate. The tweak is filtered to `com.apple.springboard`, so it is loaded into SpringBoard rather than every application.
-
-The tweak currently:
-- Adds a soft daylight glow between 07:00 and 13:59 local device time.
-- Emits animated snow particles between 14:00 and 06:59.
-- Adds a subtle glass edge/sheen to SpringBoard icon image views.
-- Adds a low-opacity glass panel to the lock-screen cover sheet and Control Center when their expected iOS classes are present.
-- Exposes an enable/disable switch in Settings through a PreferenceLoader bundle. The tweak and settings pane share the `com.nova.glass.weather` defaults suite.
-
-Private SpringBoard class names and view lifecycles are not public APIs. The hooks are conditional where possible, but runtime behavior must be verified on the exact jailbreak and iOS build before treating the package as safe. A compile success is not a device test.
-
-## 5. Live effects versus wallpaper
-
-The six PNG wallpapers are static, correctly sized artwork for the iPhone 5s display. `Wallpaper-Preview.html` is a browser preview only. The actual time-dependent sunlight/snow effect is drawn by the SpringBoard tweak; it is not an HTML wallpaper and does not depend on the browser staying open.
-
-## 6. Ringtone
-
-The ringtone source is `tools/generate_ringtone.py`. It synthesizes an original melody as PCM WAV. CI converts it to AAC in an M4R container and places it at `/Library/Ringtones/NOVA Glass.m4r` in the Debian package. iOS ringtone handling has historical/private registration details, so availability in Settings must still be confirmed on-device after installation. Keep the original tone file and back up existing system sounds.
-
-## 7. Build
-
-GitHub Actions on macOS:
-1. Installs Pillow, FFmpeg, ldid and dpkg.
-2. Generates the SnowBoard icon/wallpaper artwork.
-3. Generates and converts the original ringtone.
-4. Installs Theos.
-5. Compiles the rootful iOS 12 tweak and preference bundle.
-6. Packages the ringtone into the Debian package.
-7. Creates one ZIP containing the theme folder, .deb, ringtone and installation notes.
-
-The artifact's successful creation confirms the automated build/package steps only. It does not prove visual quality, bundle-ID matching for every third-party app, or runtime stability on a physical iPhone.
-
-## 8. Safe installation / recovery
-
-- Make an iTunes/iMazing backup first.
-- Install the .deb using Sileo.
-- Copy `NOVA Glass.theme` into `/Library/Themes/` and enable it in SnowBoard.
-- Respring once.
-- If SpringBoard becomes unstable, enter safe mode or use SSH/NewTerm to remove package `com.nova.glass.weather`, then respring.
-- Do not replace SpringBoard.app assets or system frameworks manually.
-
-## 9. Known boundaries
-
-- This is not a full system-wide replacement of every UIKit surface. The Control Center and lock-screen treatment is a restrained overlay; it does not redesign their controls.
-- Gestures, fonts, notification banners, status bar and every Settings subpage are not all independently themed by this initial implementation.
-- App icon coverage depends on actual installed bundle IDs.
-- The time schedule uses the device's local clock.
-- iOS 12.5.8 + Amethyst runtime compatibility has not been certified by a physical-device test.
+The tweak uses private SpringBoard classes. A successful compile is not a guarantee of runtime compatibility on every Amethyst/Sonar configuration. Test on the target iPhone 5s / iOS 12.5.8. If SpringBoard becomes unstable, remove `com.nova.glass.weather` from Sileo or SSH and respring.
