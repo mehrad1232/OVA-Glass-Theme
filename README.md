@@ -36,11 +36,10 @@ The package targets rootful arm64. It is not a rootless package.
 ## Install
 
 1. Back up the device.
-2. Install the included `.deb` with Sileo.
-3. Copy `NOVA Glass.theme` to `/Library/Themes/`.
-4. Enable NOVA Glass in SnowBoard (and enable its Settings Icons extension if available).
-5. Respring.
-6. Choose the NOVA Glass tone in Settings → Sounds if iOS has registered it.
+2. Install the single included `.deb` with Sileo. It installs the SnowBoard theme, SpringBoard tweak, preference pane and ringtone into their rootful locations.
+3. Open SnowBoard and enable NOVA Glass (enable the Settings Icons extension if available).
+4. Respring if Sileo has not already restarted SpringBoard.
+5. Choose NOVA Glass in Settings → Sounds if iOS has registered the tone.
 
 ## Compatibility and honest status
 
