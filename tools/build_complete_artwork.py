@@ -34,6 +34,16 @@ APPS=[
 ("com.dropbox.Dropbox","cloud"),("com.amazon.Amazon","bag"),("com.ubercab.UberClient","car"),
 ("com.ubercab.UberEats","food"),("com.airbnb.app","home"),("com.booking.BookingApp","bed"),
 ("com.todoist.ios","checklist"),("com.notion.id","notes"),("com.openai.chat","spark"),
+("com.apple.iTunesStore","appstore"),("com.apple.Pages","book"),("com.apple.Numbers","chart"),
+("com.apple.Keynote","chart"),("com.apple.iMovie","video"),("com.apple.garageband","music"),
+("com.apple.Translate","globe"),("com.apple.Files","folder"),("com.apple.Store","bag"),
+("com.apple.TV","play"),("com.apple.Videos","play"),("com.apple.Remote","play"),
+("com.apple.GameCenter","game"),("com.apple.mobileme.fmip1","radar"),
+("com.google.Drive","cloud"),("com.google.Maps","globe"),("com.google.Photos","photos"),
+("com.facebook.Messenger","chat"),("com.amazon.mShop.iPhone","bag"),
+("com.evernote.iPhone.Evernote","notes"),("com.microsoft.skydrive","cloud"),
+("com.google.Docs","book"),("com.google.Sheets","chart"),("com.google.Slides","chart"),
+("com.apple.mobilephone","phone"),("com.apple.VoiceMemos","voice"),
 ]
 # Remove duplicate bundle IDs while preserving order.
 APPS=list(dict((x[0],x) for x in reversed(APPS)).values())[::-1]
