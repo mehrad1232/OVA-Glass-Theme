@@ -15,7 +15,7 @@ BUNDLE_NAME = NOVAWeatherPrefs
 NOVAWeatherPrefs_FILES = NOVAWeatherPrefs.m
 NOVAWeatherPrefs_INSTALL_PATH = /Library/PreferenceBundles
 NOVAWeatherPrefs_FRAMEWORKS = UIKit
-NOVAWeatherPrefs_PRIVATE_FRAMEWORKS = Preferences
+NOVAWeatherPrefs_LDFLAGS += -undefined dynamic_lookup
 NOVAWeatherPrefs_CFLAGS = -fobjc-arc
 
 include $(THEOS_MAKE_PATH)/tweak.mk
