@@ -10,6 +10,8 @@ ICON_DIR=THEME/"IconBundles"
 SETTINGS=THEME/"Bundles"/"com.apple.preferences-framework"
 MASTER=THEME/"Artwork-Source"/"Icons"
 for p in (ICON_DIR, SETTINGS, MASTER): p.mkdir(parents=True,exist_ok=True)
+for p in ICON_DIR.glob("*.png"): p.unlink()
+for p in SETTINGS.glob("*.png"): p.unlink()
 
 APPS=[
 ("com.apple.mobilesafari","safari"),("com.apple.mobilemail","mail"),("com.apple.mobilephone","phone"),
@@ -56,7 +58,7 @@ def draw_glyph(d,kind,cx=256,cy=252):
         d.rounded_rectangle((102,166,410,350),radius=28,outline=white,width=18)
         line([(118,190),(256,292),(394,190)],18,pale)
     elif kind in ("music",):
-        line([(290,120),(290,315),18,white); line([(290,130),(385,105),(385,295)],18,white)
+        line([(290,120),(290,315)],18,white); line([(290,130),(385,105),(385,295)],18,white)
         d.ellipse((190,294,292,384),fill=pale); d.ellipse((285,274,390,365),fill=white)
     elif kind in ("play",):
         d.ellipse((105,105,407,407),outline=white,width=16); d.polygon([(220,165),(220,345),(355,255)],fill=pale)
@@ -158,7 +160,7 @@ settings=[
 ("EmergencySOS","heart"),("FaceID","people"),("iCloud","cloud"),("Passwords","wallet")
 ]
 for name,kind in settings:
-    im=icon(kind,hash(name)%100000)
+    im=icon(kind,sum(ord(ch)*(i+1) for i,ch in enumerate(name)))
     im.resize((58,58),Image.Resampling.LANCZOS).save(SETTINGS/(name+"@2x.png"),optimize=True)
     im.resize((87,87),Image.Resampling.LANCZOS).save(SETTINGS/(name+"@3x.png"),optimize=True)
 
