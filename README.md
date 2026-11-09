@@ -1,42 +1,55 @@
-# NOVA Glass — iOS 12 / iPhone 5s
+# NOVA Glass — complete iPhone 5s / iOS 12 project
 
-NOVA Glass is a rootful SnowBoard icon theme for legacy iOS, with six static wallpapers and a separate experimental SpringBoard weather-effects companion.
+NOVA Glass is a unified rootful jailbreak customization project for **iPhone 5s / iOS 12.5.8**. It combines a SnowBoard theme, a Theos/Logos SpringBoard tweak, a PreferenceLoader settings pane and an original ringtone.
 
-## What is included
-- `NOVA Glass.theme/`: theme package. `tools/build_theme.py` generates icon PNGs, wallpapers, artwork masters, and preview.
-- `NOVAWeather/`: companion tweak documentation. This folder currently contains documentation only; it is **not** a built or installable tweak package.
-- `.github/workflows/main.yml`: GitHub Actions packaging workflow.
+## Repository structure
 
-## Build the theme
-The workflow installs Pillow, runs `python3 tools/build_theme.py`, validates file counts and image dimensions, and creates a ZIP artifact. This validation is a packaging check; it does not prove that every icon matches an installed app's bundle identifier or that the artwork has been visually reviewed on an iPhone.
+- `NOVA Glass.theme/` — SnowBoard theme, generated app icons, Settings icons, wallpapers and editable artwork.
+- `NOVAWeather/` — Objective-C/Logos tweak, Theos Makefile, Debian control metadata, PreferenceLoader bundle and install layout.
+- `tools/build_theme.py` — base artwork and wallpaper generation.
+- `tools/build_complete_artwork.py` — recognizable app pictograms and iOS 12 Settings icon variants.
+- `tools/generate_ringtone.py` — original NOVA ringtone source generator.
+- `.github/workflows/build-complete.yml` — one workflow that builds and packages all deliverables.
+- `docs/RESEARCH-AND-ARCHITECTURE.md` — implementation research, compatibility notes, installation and recovery.
 
-1. Open the repository's **Actions** tab.
-2. Select the latest successful **Build NOVA Glass Theme** run.
-3. Download the `NOVA-Glass-Theme-iOS12-v3.0` artifact and extract it.
-4. Copy `NOVA Glass.theme` to `/Library/Themes/` on the jailbroken device.
-5. Enable it in SnowBoard, then respring.
-6. Set one of the included PNG wallpapers manually in Settings or Photos.
+## Features implemented in source
 
-## iOS 12 / SnowBoard install
-Use a rootful jailbreak and SnowBoard compatible with iOS 12.5.8. Transfer the extracted folder using trusted SSH/SFTP or Filza. Back up the original theme before replacing anything. If icons don't change, check the app's actual bundle identifier and confirm SnowBoard icon theming is enabled.
+- SnowBoard app icons matched by bundle ID, plus iOS 12 Settings icon assets.
+- Six static iPhone 5s wallpapers.
+- SpringBoard daylight glow from 07:00 to 13:59 and animated snow from 14:00 to 06:59.
+- Subtle glass edge treatment for SpringBoard icon image views.
+- Best-effort translucent glass overlays on the iOS cover sheet and Control Center when their private classes are present.
+- Settings toggle for enabling/disabling the weather effects.
+- Original 24-second ringtone generated from source and staged in `/Library/Ringtones`.
+- One ZIP artifact containing the theme, installable Debian package and installation instructions.
 
-## Scope and limitations
-- This is an icon-and-wallpaper theme. It does not independently theme Control Center, lock-screen layout, system UI, gestures, fonts, or ringtones.
-- Third-party icons are best-effort: SnowBoard only matches an icon if its filename corresponds to the installed app's bundle identifier. App updates can change identifiers.
-- Wallpapers are ordinary static PNGs. The HTML preview is a browser preview, not an iOS live wallpaper.
-- The current generator draws stylized glass/gradient monogram icons. They are generated placeholders, not individually hand-designed app glyphs; the repository does not include a vetted icon source pack.
-- `NOVAWeather` is documentation-only. No tweak source, Theos Makefile, control file, or .deb is included. Do not install it expecting sunlight/snow overlays to run.
-- No runtime device test has been performed as part of this update.
+## Build / download
 
-## Custom ringtone (iOS 12)
-The theme does not install ringtones. Safest workflow:
-1. On Windows, prepare a short audio file (AAC/M4A, preferably <=30 seconds).
-2. Convert it to ringtone format `.m4r` (AAC audio with the .m4r extension).
-3. Transfer it to iPhone using a trusted ringtone manager / supported iTunes workflow, or a compatible jailbreak ringtone tool.
-4. Back up existing ringtone files before any manual filesystem replacement. Avoid overwriting system sounds blindly.
-5. Select the installed tone in Settings > Sounds.
+Open **Actions → Build NOVA Glass Complete iOS 12 Package**. Download the artifact named `NOVA-Glass-Full-iOS12`. The ZIP contains:
+- `NOVA Glass.theme/`
+- `Packages/com.nova.glass.weather_*.deb`
+- `NOVA-Glass-Ringtone.m4r`
+- `INSTALL.txt`
 
-Ringtone tools and iOS 12 compatibility vary. Confirm compatibility before installing packages; don't assume a tweak built for modern iOS works on 12.5.8.
+The package targets rootful arm64. It is not a rootless package.
 
-## Contributions
-Include source artwork, app bundle identifier, license/attribution, and device/OS compatibility notes for new icons. For code changes, build the artifact and inspect it before claiming device compatibility.
+## Install
+
+1. Back up the device.
+2. Install the included `.deb` with Sileo.
+3. Copy `NOVA Glass.theme` to `/Library/Themes/`.
+4. Enable NOVA Glass in SnowBoard (and enable its Settings Icons extension if available).
+5. Respring.
+6. Choose the NOVA Glass tone in Settings → Sounds if iOS has registered it.
+
+## Compatibility and honest status
+
+This repository contains actual source code and automated packaging, not only a mock-up. However, SpringBoard, Lock Screen and Control Center are private iOS internals. The tweak uses conditional hooks and must be verified on the exact Amethyst/Sileo/iOS 12.5.8 combination before it can be called runtime-certified. A green GitHub build proves compilation and packaging, not safe runtime behavior.
+
+Some third-party icon filenames may need adjustment to match the installed app's exact bundle ID. The glass overlay is a restrained visual treatment; it does not replace every system UI screen, add new gestures, or redesign every notification/status-bar element. The HTML wallpaper preview is for desktop preview only; the actual clock-based weather effect comes from the tweak.
+
+If SpringBoard becomes unstable, remove `com.nova.glass.weather` from Sileo or through SSH and respring. Do not manually overwrite system frameworks or SpringBoard.app assets.
+
+## Research
+
+See [docs/RESEARCH-AND-ARCHITECTURE.md](docs/RESEARCH-AND-ARCHITECTURE.md) for technical decisions and references to Theos, Logos, SnowBoard, PreferenceLoader and iOS ringtone format.
