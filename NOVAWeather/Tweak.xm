@@ -57,17 +57,46 @@ static void NOVAOverlayPreferencesChanged(CFNotificationCenterRef center, void *
         _snowLayer.emitterMode = kCAEmitterLayerSurface;
         CAEmitterCell *flake = [CAEmitterCell emitterCell];
         flake.contents = (id)[self snowflakeImage].CGImage;
-        flake.birthRate = 8;
-        flake.lifetime = 13;
-        flake.velocity = 38;
-        flake.velocityRange = 24;
-        flake.xAcceleration = 4;
-        flake.yAcceleration = 7;
-        flake.scale = .22;
-        flake.scaleRange = .15;
-        flake.alphaSpeed = -.022;
-        flake.spinRange = 1.0;
-        _snowLayer.emitterCells = @[flake];
+        // Dense layered snowfall: small distant flakes, medium flakes and
+        // larger foreground flakes share the full-width emitter.
+        flake.birthRate = 34;
+        flake.lifetime = 17;
+        flake.velocity = 48;
+        flake.velocityRange = 30;
+        flake.xAcceleration = 7;
+        flake.yAcceleration = 10;
+        flake.scale = .24;
+        flake.scaleRange = .16;
+        flake.alphaSpeed = -.010;
+        flake.spinRange = 1.4;
+
+        CAEmitterCell *mediumFlake = [CAEmitterCell emitterCell];
+        mediumFlake.contents = flake.contents;
+        mediumFlake.birthRate = 19;
+        mediumFlake.lifetime = 15;
+        mediumFlake.velocity = 62;
+        mediumFlake.velocityRange = 34;
+        mediumFlake.xAcceleration = 10;
+        mediumFlake.yAcceleration = 12;
+        mediumFlake.scale = .39;
+        mediumFlake.scaleRange = .18;
+        mediumFlake.alphaSpeed = -.012;
+        mediumFlake.spinRange = 1.8;
+
+        CAEmitterCell *largeFlake = [CAEmitterCell emitterCell];
+        largeFlake.contents = flake.contents;
+        largeFlake.birthRate = 9;
+        largeFlake.lifetime = 12;
+        largeFlake.velocity = 76;
+        largeFlake.velocityRange = 38;
+        largeFlake.xAcceleration = 13;
+        largeFlake.yAcceleration = 15;
+        largeFlake.scale = .58;
+        largeFlake.scaleRange = .20;
+        largeFlake.alphaSpeed = -.018;
+        largeFlake.spinRange = 2.2;
+
+        _snowLayer.emitterCells = @[flake, mediumFlake, largeFlake];
         [self.layer addSublayer:_snowLayer];
 
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
@@ -112,8 +141,11 @@ static void NOVAOverlayPreferencesChanged(CFNotificationCenterRef center, void *
     [super layoutSubviews];
     self.sunLayer.frame = self.bounds;
     self.snowLayer.frame = self.bounds;
-    self.snowLayer.emitterPosition = CGPointMake(CGRectGetMidX(self.bounds), -8);
-    self.snowLayer.emitterSize = CGSizeMake(self.bounds.size.width * 1.2, 1);
+    // Emit across and slightly beyond the entire screen width so flakes
+    // are already entering from both edges instead of clustering in center.
+    self.snowLayer.emitterPosition = CGPointMake(CGRectGetMidX(self.bounds), -12);
+    self.snowLayer.emitterSize = CGSizeMake(self.bounds.size.width * 1.35, 2);
+    self.snowLayer.renderMode = kCAEmitterLayerUnordered;
 }
 - (void)dealloc {
     [self.clockTimer invalidate];
