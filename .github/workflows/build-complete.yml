@@ -23,13 +23,14 @@ jobs:
       - name: Install build tools
         run: |
           brew install ldid dpkg ffmpeg
-          python3 -m pip install --disable-pip-version-check Pillow
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --disable-pip-version-check --upgrade pip Pillow
 
       - name: Generate SnowBoard theme and wallpapers
         run: |
-          python3 tools/build_theme.py
-          python3 tools/build_complete_artwork.py
-          python3 - <<'PY'
+          .venv/bin/python tools/build_theme.py
+          .venv/bin/python tools/build_complete_artwork.py
+          .venv/bin/python - <<'PY'
           from pathlib import Path
           import plistlib
           from PIL import Image
@@ -49,7 +50,7 @@ jobs:
 
       - name: Generate original NOVA ringtone
         run: |
-          python3 tools/generate_ringtone.py
+          .venv/bin/python tools/generate_ringtone.py
           ffmpeg -hide_banner -loglevel error -y -i dist/NOVA-Glass-Ringtone.wav -t 24 -c:a aac -b:a 192k -f ipod dist/NOVA-Glass-Ringtone.m4r
           test -s dist/NOVA-Glass-Ringtone.m4r
 
