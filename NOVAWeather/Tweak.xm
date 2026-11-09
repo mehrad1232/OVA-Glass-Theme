@@ -4,7 +4,8 @@
 
 static NSString * const kNOVAEnabledKey = @"com.nova.glass.enabled";
 static BOOL NOVAEnabled(void) {
-    id value = [[NSUserDefaults standardUserDefaults] objectForKey:kNOVAEnabledKey];
+    NSUserDefaults *prefs=[[NSUserDefaults alloc] initWithSuiteName:@"com.nova.glass.weather"];
+    id value = [prefs objectForKey:kNOVAEnabledKey];
     return value ? [value boolValue] : YES;
 }
 
