@@ -45,6 +45,11 @@ jobs:
           git clone --depth 1 https://github.com/theos/theos.git "$GITHUB_WORKSPACE/theos"
           echo "THEOS=$GITHUB_WORKSPACE/theos" >> "$GITHUB_ENV"
 
+      - name: Stage ringtone into Debian package
+        run: |
+          mkdir -p "NOVAWeather/layout/Library/Ringtones"
+          cp dist/NOVA-Glass-Ringtone.m4r "NOVAWeather/layout/Library/Ringtones/NOVA Glass.m4r"
+
       - name: Compile rootful iOS 12 tweak
         working-directory: NOVAWeather
         run: |
