@@ -1,19 +1,14 @@
-# NOVA Glass Weather Effects — iOS 12
+# NOVA Glass Weather & UI Tweak
 
-This rootful Theos tweak is a separate companion to the SnowBoard icon theme.
-
-## Behavior
-- Sunlight: radial warm light from the top of the wallpaper view from 07:00 inclusive to 14:00 exclusive, using the device's local clock.
-- Snow: animated Core Animation emitter from 19:00 inclusive through 06:59 local time.
-- 14:00–18:59: neither sunlight nor snowfall.
-- The overlay is attached to SpringBoard's SBFStaticWallpaperView; it does not alter app icons or app UI.
-
-## Compatibility and limitations
-- Build target: iOS 12.0+, rootful jailbreak, arm64; intended for iPhone 5s / iOS 12.5.8 and Amethyst with MobileSubstrate-compatible injection.
-- SnowBoard is needed for the icon theme, not for this tweak.
-- This is not a WinterBoard HTML wallpaper. The effect is implemented by a SpringBoard tweak.
-- The source and package can be build-validated in CI, but runtime behavior must still be verified on the actual iPhone 5s. A successful .deb build alone is not proof of device compatibility.
-- If SBFStaticWallpaperView changes in a jailbreak/SpringBoard build, the tweak will not attach. Disable or uninstall the package to recover; it has no preference pane or safe-mode dependency.
+Rootful iOS 12 / arm64 Theos tweak source. The tweak adds a time-aware overlay:
+- 07:00–13:59: soft daylight glow.
+- 14:00–06:59: animated snow emitter.
+- A subtle glass surface on Lock Screen and Control Center when the relevant iOS 12 classes exist.
 
 ## Build
-Run make clean package FINALPACKAGE=1 with Theos and an iOS SDK installed. The resulting rootful package is under packages/.
+Run `make package` with Theos installed and an iOS SDK/toolchain available. GitHub Actions builds the .deb on macOS and uploads it as an artifact.
+
+## Important limitations
+This is a best-effort private-API tweak. SpringBoard, lock-screen and Control Center class names and view lifecycles are private implementation details and can vary across iOS point releases and jailbreak substrate versions. The overlay is non-interactive; it does not replace system controls. A successful compile is not proof of runtime stability. Keep a way to disable/remove the package through Sileo or SSH.
+
+Preference key: `com.nova.glass.enabled` (NSUserDefaults, default YES).
