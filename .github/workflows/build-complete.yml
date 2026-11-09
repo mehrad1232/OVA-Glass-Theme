@@ -1,0 +1,91 @@
+name: Build NOVA Glass Complete iOS 12 Package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "NOVAWeather/**"
+      - "NOVA Glass.theme/**"
+      - "tools/**"
+      - ".github/workflows/build-complete.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nova-glass-complete-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-complete:
+    runs-on: macos-14
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          brew install ldid dpkg ffmpeg
+          python3 -m pip install --disable-pip-version-check Pillow
+
+      - name: Generate SnowBoard theme and wallpapers
+        run: |
+          python3 tools/build_theme.py
+          python3 tools/build_complete_artwork.py
+
+      - name: Generate original NOVA ringtone
+        run: |
+          python3 tools/generate_ringtone.py
+          ffmpeg -hide_banner -loglevel error -y -i dist/NOVA-Glass-Ringtone.wav -t 24 -c:a aac -b:a 192k -f ipod dist/NOVA-Glass-Ringtone.m4r
+          test -s dist/NOVA-Glass-Ringtone.m4r
+
+      - name: Install Theos
+        run: |
+          git clone --depth 1 https://github.com/theos/theos.git "$GITHUB_WORKSPACE/theos"
+          echo "THEOS=$GITHUB_WORKSPACE/theos" >> "$GITHUB_ENV"
+
+      - name: Compile rootful iOS 12 tweak
+        working-directory: NOVAWeather
+        run: |
+          export THEOS="$GITHUB_WORKSPACE/theos"
+          make clean
+          make package FINALPACKAGE=1
+          test -n "$(find packages -name '*.deb' -maxdepth 1 -print -quit)"
+
+      - name: Assemble one complete install bundle
+        run: |
+          mkdir -p dist/NOVA-Glass-Full
+          cp -R "NOVA Glass.theme" dist/NOVA-Glass-Full/
+          mkdir -p dist/NOVA-Glass-Full/Packages
+          cp NOVAWeather/packages/*.deb dist/NOVA-Glass-Full/Packages/
+          cp dist/NOVA-Glass-Ringtone.m4r dist/NOVA-Glass-Full/
+          cp NOVAWeather/README.md dist/NOVA-Glass-Full/
+          cat > dist/NOVA-Glass-Full/INSTALL.txt <<'EOF'
+          NOVA GLASS — iPhone 5s / iOS 12.5.8 / rootful jailbreak
+
+          1. Back up your device and existing theme before installing.
+          2. Copy NOVA Glass.theme to /Library/Themes/.
+          3. Install the NOVAWeather .deb from Packages/ using Sileo.
+          4. Enable NOVA Glass in SnowBoard and respring.
+          5. Import NOVA-Glass-Ringtone.m4r with a ringtone manager that supports iOS 12.
+          6. Set the tone in Settings > Sounds.
+
+          The tweak uses private SpringBoard classes. Compilation is not proof of runtime safety.
+          If SpringBoard enters a respring loop, remove com.nova.glass.weather from Sileo/SSH.
+          The weather overlay is time-based: sunlight 07:00–13:59, snow 14:00–06:59.
+          EOF
+          cd dist
+          zip -r -0 NOVA-Glass-Full-iOS12.zip NOVA-Glass-Full
+          shasum -a 256 NOVA-Glass-Full-iOS12.zip > NOVA-Glass-Full-iOS12.sha256
+          test -s NOVA-Glass-Full-iOS12.zip
+
+      - name: Upload complete package
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOVA-Glass-Full-iOS12
+          path: |
+            dist/NOVA-Glass-Full-iOS12.zip
+            dist/NOVA-Glass-Full-iOS12.sha256
+          if-no-files-found: error
+          retention-days: 30
