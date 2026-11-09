@@ -2,6 +2,11 @@
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 
+@interface SBIconImageView : UIImageView @end
+@interface CSCoverSheetViewController : UIViewController @end
+@interface SBLockScreenViewController : UIViewController @end
+@interface CCUIControlCenterViewController : UIViewController @end
+
 static NSString * const kNOVAEnabledKey = @"com.nova.glass.enabled";
 static BOOL NOVAEnabled(void) {
     NSUserDefaults *prefs=[[NSUserDefaults alloc] initWithSuiteName:@"com.nova.glass.weather"];
@@ -163,7 +168,7 @@ static void NOVAInstallOverlay(UIView *host, NSInteger tag, BOOL weather) {
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
     dispatch_async(dispatch_get_main_queue(), ^{
-        NOVAInstallOverlay(self.view, 0x4E4F5642, NO);
+        NOVAInstallOverlay([(UIViewController *)self view], 0x4E4F5642, NO);
     });
 }
 %end
@@ -174,7 +179,7 @@ static void NOVAInstallOverlay(UIView *host, NSInteger tag, BOOL weather) {
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
     dispatch_async(dispatch_get_main_queue(), ^{
-        NOVAInstallOverlay(self.view, 0x4E4F5643, NO);
+        NOVAInstallOverlay([(UIViewController *)self view], 0x4E4F5643, NO);
     });
 }
 %end
