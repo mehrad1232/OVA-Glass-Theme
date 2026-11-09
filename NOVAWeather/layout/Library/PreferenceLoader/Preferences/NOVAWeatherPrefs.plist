@@ -1,0 +1,7 @@
+{
+    entry = {
+        bundle = NOVAWeatherPrefs;
+        cell = PSLinkCell;
+        label = "NOVA Glass";
+    };
+}
