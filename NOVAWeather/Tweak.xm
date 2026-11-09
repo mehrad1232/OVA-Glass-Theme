@@ -2,24 +2,38 @@
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 
+@interface SBIconController : UIViewController @end
 @interface SBIconImageView : UIImageView @end
 @interface CSCoverSheetViewController : UIViewController @end
-@interface SBLockScreenViewController : UIViewController @end
-@interface CCUIControlCenterViewController : UIViewController @end
 
 static NSString * const kNOVAEnabledKey = @"com.nova.glass.enabled";
-static BOOL NOVAEnabled(void) {
-    NSUserDefaults *prefs=[[NSUserDefaults alloc] initWithSuiteName:@"com.nova.glass.weather"];
-    id value = [prefs objectForKey:kNOVAEnabledKey];
+static NSString * const kNOVASunEnabledKey = @"com.nova.glass.sun.enabled";
+static NSString * const kNOVASnowEnabledKey = @"com.nova.glass.snow.enabled";
+static NSString * const kNOVAPrefsSuite = @"com.nova.glass.weather";
+static CFStringRef const kNOVAPrefsChanged = CFSTR("com.nova.glass/preferences-changed");
+
+static BOOL NOVASettingEnabled(NSString *key) {
+    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:kNOVAPrefsSuite];
+    id value = [prefs objectForKey:key];
     return value ? [value boolValue] : YES;
 }
+static BOOL NOVAEnabled(void) { return NOVASettingEnabled(kNOVAEnabledKey); }
+static BOOL NOVASunEnabled(void) { return NOVASettingEnabled(kNOVASunEnabledKey); }
+static BOOL NOVASnowEnabled(void) { return NOVASettingEnabled(kNOVASnowEnabledKey); }
 
 @interface NOVAGlassOverlay : UIView
 @property(nonatomic,strong) CAGradientLayer *sunLayer;
 @property(nonatomic,strong) CAEmitterLayer *snowLayer;
 @property(nonatomic,strong) NSTimer *clockTimer;
-@property(nonatomic,assign) BOOL weatherEnabled;
+- (void)updateForClock;
 @end
+
+static void NOVAOverlayPreferencesChanged(CFNotificationCenterRef center, void *observer,
+                                          CFStringRef name, const void *object,
+                                          CFDictionaryRef userInfo) {
+    NOVAGlassOverlay *overlay = (__bridge NOVAGlassOverlay *)observer;
+    dispatch_async(dispatch_get_main_queue(), ^{ [overlay updateForClock]; });
+}
 
 @implementation NOVAGlassOverlay
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -28,7 +42,7 @@ static BOOL NOVAEnabled(void) {
         self.userInteractionEnabled = NO;
         self.clipsToBounds = YES;
         self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        _weatherEnabled = YES;
+
         _sunLayer = [CAGradientLayer layer];
         _sunLayer.startPoint = CGPointMake(.15, .1);
         _sunLayer.endPoint = CGPointMake(.85, .9);
@@ -43,16 +57,30 @@ static BOOL NOVAEnabled(void) {
         _snowLayer.emitterMode = kCAEmitterLayerSurface;
         CAEmitterCell *flake = [CAEmitterCell emitterCell];
         flake.contents = (id)[self snowflakeImage].CGImage;
-        flake.birthRate = 8; flake.lifetime = 13; flake.velocity = 38;
-        flake.velocityRange = 24; flake.xAcceleration = 4; flake.yAcceleration = 7;
-        flake.scale = .22; flake.scaleRange = .15; flake.alphaSpeed = -.022;
+        flake.birthRate = 8;
+        flake.lifetime = 13;
+        flake.velocity = 38;
+        flake.velocityRange = 24;
+        flake.xAcceleration = 4;
+        flake.yAcceleration = 7;
+        flake.scale = .22;
+        flake.scaleRange = .15;
+        flake.alphaSpeed = -.022;
         flake.spinRange = 1.0;
         _snowLayer.emitterCells = @[flake];
         [self.layer addSublayer:_snowLayer];
+
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+            (__bridge const void *)self, NOVAOverlayPreferencesChanged,
+            kNOVAPrefsChanged, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+
         [self updateForClock];
-        _clockTimer = [NSTimer scheduledTimerWithTimeInterval:60 target:self selector:@selector(updateForClock) userInfo:nil repeats:YES];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateForClock) name:NSSystemTimeZoneDidChangeNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateForClock) name:NSSystemClockDidChangeNotification object:nil];
+        _clockTimer = [NSTimer scheduledTimerWithTimeInterval:60
+            target:self selector:@selector(updateForClock) userInfo:nil repeats:YES];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateForClock)
+            name:NSSystemTimeZoneDidChangeNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateForClock)
+            name:NSSystemClockDidChangeNotification object:nil];
     }
     return self;
 }
@@ -66,17 +94,18 @@ static BOOL NOVAEnabled(void) {
     CGContextMoveToPoint(c,3,3); CGContextAddLineToPoint(c,15,15);
     CGContextMoveToPoint(c,15,3); CGContextAddLineToPoint(c,3,15);
     CGContextStrokePath(c);
-    UIImage *image=UIGraphicsGetImageFromCurrentImageContext();
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return image;
 }
 - (void)updateForClock {
-    if (!NOVAEnabled()) { self.sunLayer.opacity=0; self.snowLayer.birthRate=0; return; }
+    BOOL enabled = NOVAEnabled();
     NSInteger hour = [[NSCalendar currentCalendar] component:NSCalendarUnitHour fromDate:[NSDate date]];
     BOOL daylight = (hour >= 7 && hour < 14);
-    [CATransaction begin]; [CATransaction setAnimationDuration:2.0];
-    self.sunLayer.opacity = daylight ? 1.0 : 0.0;
-    self.snowLayer.birthRate = daylight ? 0.0 : 1.0;
+    [CATransaction begin];
+    [CATransaction setAnimationDuration:1.0];
+    self.sunLayer.opacity = (enabled && daylight && NOVASunEnabled()) ? 1.0 : 0.0;
+    self.snowLayer.birthRate = (enabled && !daylight && NOVASnowEnabled()) ? 1.0 : 0.0;
     [CATransaction commit];
 }
 - (void)layoutSubviews {
@@ -88,6 +117,8 @@ static BOOL NOVAEnabled(void) {
 }
 - (void)dealloc {
     [self.clockTimer invalidate];
+    CFNotificationCenterRemoveObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+        (__bridge const void *)self, kNOVAPrefsChanged, NULL);
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 @end
@@ -96,69 +127,73 @@ static BOOL NOVAEnabled(void) {
 @end
 @implementation NOVAGlassPanel
 - (instancetype)initWithFrame:(CGRect)frame {
-    if ((self=[super initWithFrame:frame])) {
-        self.userInteractionEnabled=NO;
-        self.backgroundColor=[UIColor colorWithWhite:1 alpha:.045];
-        self.layer.borderColor=[UIColor colorWithWhite:1 alpha:.20].CGColor;
-        self.layer.borderWidth=1.0;
-        self.layer.cornerRadius=18;
-        self.layer.masksToBounds=YES;
-        if ([UIBlurEffect class]) {
-            UIVisualEffectView *blur=[[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleLight]];
-            blur.alpha=.18; blur.frame=self.bounds;
-            blur.autoresizingMask=UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
-            [self addSubview:blur];
-        }
+    if ((self = [super initWithFrame:frame])) {
+        self.userInteractionEnabled = NO;
+        self.backgroundColor = [UIColor colorWithWhite:1 alpha:.035];
+        self.layer.borderColor = [UIColor colorWithWhite:1 alpha:.16].CGColor;
+        self.layer.borderWidth = 1.0;
+        self.layer.cornerRadius = 18;
+        self.layer.masksToBounds = YES;
     }
     return self;
 }
 @end
 
-static void NOVAInstallOverlay(UIView *host, NSInteger tag, BOOL weather) {
-    if (!host || !NOVAEnabled() || [host viewWithTag:tag]) return;
-    UIView *overlay = weather ? (UIView *)[[NOVAGlassOverlay alloc] initWithFrame:host.bounds] : (UIView *)[[NOVAGlassPanel alloc] initWithFrame:host.bounds];
-    overlay.tag=tag;
-    overlay.autoresizingMask=UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
-    [host addSubview:overlay];
+static void NOVAInstallOverlayBehindContent(UIView *host, NSInteger tag, BOOL weather) {
+    if (!host) return;
+    UIView *existing = [host viewWithTag:tag];
+    if (existing) {
+        existing.frame = host.bounds;
+        return;
+    }
+    UIView *overlay = weather ? (UIView *)[[NOVAGlassOverlay alloc] initWithFrame:host.bounds]
+                              : (UIView *)[[NOVAGlassPanel alloc] initWithFrame:host.bounds];
+    overlay.tag = tag;
+    overlay.userInteractionEnabled = NO;
+    overlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [host insertSubview:overlay atIndex:0];
 }
 
 %group NOVAIconGlass
 %hook SBIconImageView
 - (void)layoutSubviews {
     %orig;
-    CALayer *glass=nil;
+    CALayer *glass = nil;
     for (CALayer *candidate in self.layer.sublayers) {
-        if ([candidate.name isEqualToString:@"com.nova.glass.icon-sheen"]) { glass=candidate; break; }
+        if ([candidate.name isEqualToString:@"com.nova.glass.icon-sheen"]) { glass = candidate; break; }
     }
     if (!glass) {
-        CAGradientLayer *sheen=[CAGradientLayer layer];
-        sheen.name=@"com.nova.glass.icon-sheen";
-        sheen.colors=@[(id)[UIColor colorWithWhite:1 alpha:.17].CGColor,
-                       (id)[UIColor colorWithWhite:1 alpha:.015].CGColor,
-                       (id)[UIColor colorWithWhite:1 alpha:.035].CGColor];
-        sheen.locations=@[@0,@.42,@1];
-        sheen.startPoint=CGPointMake(.1,0); sheen.endPoint=CGPointMake(.9,1);
-        sheen.borderColor=[UIColor colorWithWhite:1 alpha:.30].CGColor;
-        sheen.borderWidth=1.0;
+        CAGradientLayer *sheen = [CAGradientLayer layer];
+        sheen.name = @"com.nova.glass.icon-sheen";
+        sheen.colors = @[(id)[UIColor colorWithWhite:1 alpha:.17].CGColor,
+                         (id)[UIColor colorWithWhite:1 alpha:.015].CGColor,
+                         (id)[UIColor colorWithWhite:1 alpha:.035].CGColor];
+        sheen.locations = @[@0,@.42,@1];
+        sheen.startPoint = CGPointMake(.1,0);
+        sheen.endPoint = CGPointMake(.9,1);
+        sheen.borderColor = [UIColor colorWithWhite:1 alpha:.30].CGColor;
+        sheen.borderWidth = 1.0;
         [self.layer addSublayer:sheen];
-        glass=sheen;
+        glass = sheen;
     }
-    glass.frame=self.bounds;
-    glass.cornerRadius=self.layer.cornerRadius>0?self.layer.cornerRadius:18;
-    glass.masksToBounds=YES;
+    glass.frame = self.bounds;
+    glass.cornerRadius = self.layer.cornerRadius > 0 ? self.layer.cornerRadius : 18;
+    glass.masksToBounds = YES;
 }
 %end
 %end
 
 %group NOVAHome
-%hook SpringBoard
-- (void)applicationDidFinishLaunching:(id)application {
+%hook SBIconController
+- (void)viewDidAppear:(BOOL)animated {
     %orig;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3*NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *window=[UIApplication sharedApplication].keyWindow;
-        if (!window) window=[UIApplication sharedApplication].windows.firstObject;
-        NOVAInstallOverlay(window, 0x4E4F5641, YES);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NOVAInstallOverlayBehindContent([(UIViewController *)self view], 0x4E4F5641, YES);
     });
+}
+- (void)viewDidLayoutSubviews {
+    %orig;
+    NOVAInstallOverlayBehindContent([(UIViewController *)self view], 0x4E4F5641, YES);
 }
 %end
 %end
@@ -168,18 +203,7 @@ static void NOVAInstallOverlay(UIView *host, NSInteger tag, BOOL weather) {
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
     dispatch_async(dispatch_get_main_queue(), ^{
-        NOVAInstallOverlay([(UIViewController *)self view], 0x4E4F5642, NO);
-    });
-}
-%end
-%end
-
-%group NOVAControlCenter
-%hook CCUIControlCenterViewController
-- (void)viewDidAppear:(BOOL)animated {
-    %orig;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NOVAInstallOverlay([(UIViewController *)self view], 0x4E4F5643, NO);
+        NOVAInstallOverlayBehindContent([(UIViewController *)self view], 0x4E4F5642, NO);
     });
 }
 %end
@@ -187,9 +211,8 @@ static void NOVAInstallOverlay(UIView *host, NSInteger tag, BOOL weather) {
 
 %ctor {
     @autoreleasepool {
-        if (objc_getClass("SpringBoard")) %init(NOVAHome);
+        if (objc_getClass("SBIconController")) %init(NOVAHome);
         if (objc_getClass("CSCoverSheetViewController")) %init(NOVALockScreen);
         if (objc_getClass("SBIconImageView")) %init(NOVAIconGlass);
-        if (objc_getClass("CCUIControlCenterViewController")) %init(NOVAControlCenter);
     }
 }
