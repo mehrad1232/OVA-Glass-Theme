@@ -188,7 +188,8 @@ static void NOVAInstallOverlay(UIView *host, NSInteger tag, BOOL weather) {
 %ctor {
     @autoreleasepool {
         if (objc_getClass("SpringBoard")) %init(NOVAHome);
-        if (objc_getClass("CSCoverSheetViewController")) %init(NOVALockScreen);\n        if (objc_getClass("SBIconImageView")) %init(NOVAIconGlass);
+        if (objc_getClass("CSCoverSheetViewController")) %init(NOVALockScreen);
+        if (objc_getClass("SBIconImageView")) %init(NOVAIconGlass);
         if (objc_getClass("CCUIControlCenterViewController")) %init(NOVAControlCenter);
     }
 }
