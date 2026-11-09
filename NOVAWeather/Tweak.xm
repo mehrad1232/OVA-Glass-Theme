@@ -164,7 +164,7 @@ static void NOVAInstallOverlay(UIView *host, NSInteger tag, BOOL weather) {
 %end
 
 %group NOVALockScreen
-%hook SBLockScreenViewController
+%hook CSCoverSheetViewController
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -188,7 +188,7 @@ static void NOVAInstallOverlay(UIView *host, NSInteger tag, BOOL weather) {
 %ctor {
     @autoreleasepool {
         if (objc_getClass("SpringBoard")) %init(NOVAHome);
-        if (objc_getClass("CSCoverSheetViewController")) %init(NOVALockScreen);\n        else if (objc_getClass("SBLockScreenViewController")) %init(NOVALockScreen);\n        if (objc_getClass("SBIconImageView")) %init(NOVAIconGlass);
+        if (objc_getClass("CSCoverSheetViewController")) %init(NOVALockScreen);\n        if (objc_getClass("SBIconImageView")) %init(NOVAIconGlass);
         if (objc_getClass("CCUIControlCenterViewController")) %init(NOVAControlCenter);
     }
 }
