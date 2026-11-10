@@ -116,8 +116,14 @@ static void NOVASnow(UIView *host) {
     objc_setAssociatedObject(host, &kSnowKey, overlay, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 static void NOVAStyle(UIView *view) {
-    if (!NOVASetting(@"messages.enabled", NO) || !NOVAMessages()) return;
+    if (!view || !NOVAMessages()) return;
     NSString *name = NSStringFromClass(view.class);
+    if (!NOVAHas(name, @[@"BalloonView", @"CKMessageEntryView", @"CKContentEntryView",
+                        @"CKConversationListCell", @"CKConversationListStandardCell",
+                        @"CKConversationListLargeTextCell", @"CKStarkConversationListCell",
+                        @"CKTranscriptBalloonCell", @"CKConversationListTableView",
+                        @"CKTranscriptCollectionView", @"UINavigationBar", @"UIToolbar"])) return;
+    if (!NOVASetting(@"messages.enabled", NO)) return;
     BOOL ice = NOVASetting(@"messages.iceBlue", YES);
     if (NOVASetting(@"messages.bubbles", YES) && NOVAHas(name, @[@"BalloonView"])) {
         BOOL out = NOVAOutgoing(view);
@@ -140,9 +146,11 @@ static void NOVAStyle(UIView *view) {
                         @"CKConversationListLargeTextCell", @"CKStarkConversationListCell",
                         @"CKTranscriptBalloonCell"])) {
         view.backgroundColor = UIColor.clearColor;
-        UIView *content = [view isKindOfClass:UITableViewCell.class] ||
-                          [view isKindOfClass:UICollectionViewCell.class]
-                          ? [view valueForKey:@"contentView"] : view;
+        UIView *content = view;
+        if ([view isKindOfClass:UITableViewCell.class])
+            content = ((UITableViewCell *)view).contentView;
+        else if ([view isKindOfClass:UICollectionViewCell.class])
+            content = ((UICollectionViewCell *)view).contentView;
         NOVAGlass(content, UIBlurEffectStyleLight, 14,
                   [UIColor colorWithRed:.94 green:.98 blue:1 alpha:.22], .56);
         return;
