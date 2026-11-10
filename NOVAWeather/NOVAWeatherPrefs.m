@@ -10,7 +10,7 @@ static NSString * const kSuite = @"com.nova.glass.messages";
     self.title = @"NOVA Messages";
     NSUserDefaults *p = [[NSUserDefaults alloc] initWithSuiteName:kSuite];
     [p registerDefaults:@{
-        @"messages.enabled":@YES, @"messages.bubbles":@YES,
+        @"messages.enabled":@NO, @"messages.bubbles":@YES,
         @"messages.composer":@YES, @"messages.list":@YES,
         @"messages.snow":@NO, @"messages.iceBlue":@YES
     }];
