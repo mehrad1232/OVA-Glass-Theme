@@ -24,7 +24,7 @@ jobs:
         run: |
           brew install ldid dpkg ffmpeg
           python3 -m venv .venv
-          .venv/bin/python -m pip install --disable-pip-version-check --upgrade pip Pillow
+          .venv/bin/python -m pip install --disable-pip-version-check --upgrade pip Pillow numpy
 
       - name: Generate SnowBoard theme and wallpapers
         run: |
