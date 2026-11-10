@@ -1,8 +1,8 @@
 Package: com.nova.glass.weather
 Name: NOVA Glass Complete
-Version: 1.0.2
+Version: 1.0.3
 Architecture: iphoneos-arm
-Description: NOVA Glass theme, weather effects, preferences and original ringtone for rootful iOS 12.
+Description: NOVA Glass weather, motion-reactive nature effects, Messages glass styling, theme, preferences and original ringtone for rootful iOS 12.
 Maintainer: NOVA
 Author: NOVA
 Section: Tweaks
