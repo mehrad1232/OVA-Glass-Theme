@@ -99,6 +99,7 @@ jobs:
         run: |
           python3 tools/build_theme.py
           python3 tools/build_complete_artwork.py
+          python3 tools/build_seasonal_wallpapers.py
           mkdir -p dist/NOVA-Glass-Complete-iOS12
           cp -R "NOVA Glass.theme" dist/NOVA-Glass-Complete-iOS12/
           mkdir -p dist/NOVA-Glass-Complete-iOS12/Optional-XenHTML
