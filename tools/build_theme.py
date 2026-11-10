@@ -150,12 +150,12 @@ def glass_icon(bundle, label, initials, size=512):
             n=rng.randint(-13,13)
             pix[x,y]=tuple(max(0,min(255,v+n)) for v in base)
     d=ImageDraw.Draw(im,"RGBA")
-    d.rounded_rectangle((5,5,size-6,size-6),radius=int(size*.22),outline=(225,248,255,210),width=max(2,size//90))
-    d.rounded_rectangle((size*.035,size*.035,size*.965,size*.43),radius=int(size*.20),fill=(255,255,255,24))
-    d.ellipse((size*.18,size*.17,size*.82,size*.81),fill=(220,246,255,22),outline=(226,249,255,115),width=max(2,size//100))
-    d.ellipse((size*.25,size*.24,size*.75,size*.74),outline=(255,255,255,65),width=max(2,size//160))
+    # Borderless liquid-glass layers: diffuse luminous wash, no hard icon outlines.
+    d.rounded_rectangle((size*.035,size*.035,size*.965,size*.965),radius=int(size*.22),fill=(210,240,255,12))
+    d.ellipse((size*.12,size*.10,size*.88,size*.86),fill=(225,247,255,18))
+    d.ellipse((size*.23,size*.20,size*.77,size*.76),fill=(255,255,255,10))
     draw_app_glyph(d,bundle,size)
-    d.rounded_rectangle((size*.13,size*.84,size*.87,size*.89),radius=int(size*.025),fill=(225,248,255,65))
+    d.ellipse((size*.20,size*.07,size*.72,size*.25),fill=(255,255,255,18))
     return im
 
 for bundle,label,initials in APPS:
@@ -165,12 +165,16 @@ for bundle,label,initials in APPS:
 
 # Full-size 1170x2532 master art plus correctly sized 640x1136 iPhone 5s versions.
 WALLSPECS=[
+("NOVA-Glass-Pearl-iPhone5s.png","NOVA-Glass-Pearl-Master.png",((224,239,250),(170,211,236),(44,91,130)),91,False),
 ("NOVA-Glass-Day-iPhone5s.png","NOVA-Glass-Day-Master.png",((12,43,78),(39,139,184),(8,20,42)),101,False),
+("NOVA-Glass-Lavender-iPhone5s.png","NOVA-Glass-Lavender-Master.png",((57,55,106),(168,143,209),(28,24,64)),192,False),
 ("NOVA-Glass-Golden-iPhone5s.png","NOVA-Glass-Golden-Master.png",((54,73,105),(226,151,104),(27,29,62)),202,False),
+("NOVA-Glass-Rose-iPhone5s.png","NOVA-Glass-Rose-Master.png",((82,49,78),(210,139,161),(34,21,53)),293,False),
 ("NOVA-Glass-Dusk-iPhone5s.png","NOVA-Glass-Dusk-Master.png",((26,36,83),(113,94,155),(8,12,38)),303,False),
 ("NOVA-Glass-Night-iPhone5s.png","NOVA-Glass-Night-Master.png",((2,9,28),(19,43,82),(1,4,16)),404,True),
 ("NOVA-Glass-Aurora-iPhone5s.png","NOVA-Glass-Aurora-Master.png",((4,21,48),(22,100,111),(2,8,27)),505,True),
 ("NOVA-Glass-Snow-iPhone5s.png","NOVA-Glass-Snow-Master.png",((8,19,43),(53,82,119),(3,8,20)),606,True),
+("NOVA-Glass-Mint-iPhone5s.png","NOVA-Glass-Mint-Master.png",((12,59,69),(77,169,163),(4,22,35)),707,True),
 ]
 def wallpaper(path, width, height, palette, seed, snow):
     # Vectorized rendering keeps GitHub Actions builds fast even for 1170x2532 masters.
