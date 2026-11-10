@@ -72,7 +72,13 @@ jobs:
           export THEOS="$GITHUB_WORKSPACE/theos"
           make clean
           make package FINALPACKAGE=1
-          test -n "$(find packages -name '*.deb' -maxdepth 1 -print -quit)"
+          DEB="$(find packages -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$DEB"
+          test "$(dpkg-deb -f "$DEB" Package)" = "com.nova.glass.weather"
+          test "$(dpkg-deb -f "$DEB" Version)" = "1.0.2"
+          dpkg-deb -c "$DEB" | grep -F "Library/PreferenceBundles/NOVAWeatherPrefs.bundle/"
+          dpkg-deb -c "$DEB" | grep -F "Library/Ringtones/NOVA Glass.m4r"
+          dpkg-deb -c "$DEB" | grep -F "Library/Themes/NOVA Glass.theme/"
 
       - name: Assemble one complete install bundle
         run: |
