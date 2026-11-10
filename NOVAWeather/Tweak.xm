@@ -13,11 +13,12 @@ static NSString * const kSun = @"com.nova.glass.sun.enabled";
 static NSString * const kSnow = @"com.nova.glass.snow.enabled";
 static NSString * const kRain = @"com.nova.glass.rain.enabled";
 static NSString * const kLeaves = @"com.nova.glass.leaves.enabled";
+static NSString * const kRain = @"com.nova.glass.rain.enabled";
 static CFStringRef const kChanged = CFSTR("com.nova.glass/preferences-changed");
 static BOOL NOVAGet(NSString *key) {
     NSUserDefaults *p = [[NSUserDefaults alloc] initWithSuiteName:kSuite];
     id v = [p objectForKey:key];
-    return v ? [v boolValue] : YES;
+    return v ? [v boolValue] : (![key isEqualToString:kRain] && ![key isEqualToString:kLeaves]);
 }
 static BOOL NOVAOn(void) { return NOVAGet(kEnabled); }
 
@@ -27,6 +28,7 @@ static BOOL NOVAOn(void) { return NOVAGet(kEnabled); }
 @property(nonatomic,strong) CAEmitterLayer *rain;
 @property(nonatomic,strong) CAEmitterLayer *leaves;
 @property(nonatomic,strong) CMMotionManager *motion;
+@property(nonatomic,strong) NSTimer *clockTimer;
 @property(nonatomic,assign) BOOL motionActive;
 - (void)refresh;
 @end
@@ -112,6 +114,9 @@ static void NOVAPrefsChanged(CFNotificationCenterRef c, void *observer, CFString
             name:UIApplicationDidBecomeActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(appInactive)
             name:UIApplicationWillResignActiveNotification object:nil];
+        self.clockTimer = [NSTimer scheduledTimerWithTimeInterval:60 target:self selector:@selector(refresh) userInfo:nil repeats:YES];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refresh) name:NSSystemClockDidChangeNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refresh) name:NSSystemTimeZoneDidChangeNotification object:nil];
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
             (__bridge const void *)self, NOVAPrefsChanged, kChanged, NULL,
             CFNotificationSuspensionBehaviorDeliverImmediately);
