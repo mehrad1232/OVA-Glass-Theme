@@ -6,6 +6,6 @@
     <key>cell</key><string>PSLinkCell</string>
     <key>detail</key><string>NOVAWeatherPrefsController</string>
     <key>isController</key><true/>
-    <key>label</key><string>NOVA Glass</string>
+    <key>label</key><string>NOVA Messages</string>
   </dict>
 </dict></plist>
