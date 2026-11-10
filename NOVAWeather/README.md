@@ -1,14 +1,18 @@
-# NOVA Glass Weather & UI Tweak
+# NOVA Glass for Messages
 
-Rootful iOS 12 / arm64 Theos tweak source. The tweak adds a time-aware overlay:
-- 07:00–13:59: soft daylight glow.
-- 14:00–06:59: animated snow emitter.
-- A subtle glass surface on Lock Screen and Control Center when the relevant iOS 12 classes exist.
+A Messages-only visual tweak for Apple Messages (com.apple.MobileSMS) on rootful arm64 iOS 12.
 
-## Build
-Run `make package` with Theos installed and an iOS SDK/toolchain available. GitHub Actions builds the .deb on macOS and uploads it as an artifact.
+## What it styles
+- Frosted, translucent navigation and toolbar appearance.
+- Incoming and outgoing conversation balloon surfaces with rounded glass edges.
+- The message composer / input surface.
+- Conversation list cells and background.
+- Independent switches for the main effect, bubbles, composer and conversation list.
 
-## Important limitations
-This is a best-effort private-API tweak. SpringBoard, lock-screen and Control Center class names and view lifecycles are private implementation details and can vary across iOS point releases and jailbreak substrate versions. The overlay is non-interactive; it does not replace system controls. A successful compile is not proof of runtime stability. Keep a way to disable/remove the package through Sileo or SSH.
+## Install
+Build the Debian package with Theos or download the GitHub Actions artifact. Install the .deb using Sileo, force-close Messages, then reopen it. Settings are under **Settings > NOVA Messages**.
 
-Preference key: `com.nova.glass.enabled` (NSUserDefaults, default YES).
+## Compatibility and limitations
+Designed for iPhone 5s on iOS 12.5.8, arm64, rootful jailbreak. The visual treatment approximates Liquid Glass using UIKit blur and translucent layers; iOS 12 cannot run Apple's newer native Liquid Glass framework. Messages uses private view classes, so balloon and composer matching must be verified on the actual device. A successful compile is not proof of runtime compatibility.
+
+This project intentionally does not inject into SpringBoard or change the Home Screen, Lock Screen, weather, icons, ringtone, or other applications.
