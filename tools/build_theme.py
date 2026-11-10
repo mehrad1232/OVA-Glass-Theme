@@ -71,6 +71,71 @@ def font(size):
         if Path(p).exists(): return ImageFont.truetype(p,size)
     return ImageFont.load_default()
 
+def draw_app_glyph(d, bundle, size):
+    """Draw a distinct, clean glass-style pictogram instead of relying on initials."""
+    b=bundle.lower()
+    cx=size/2; cy=size/2
+    scale=size/512
+    ink=(245,252,255,238); soft=(210,241,255,155)
+    w=max(4,int(9*scale))
+    def line(points, fill=ink, width=w):
+        d.line([(int(x*scale),int(y*scale)) for x,y in points],fill=fill,width=width,joint="curve")
+    if "mobilephone" in b or b.endswith(".phone"):
+        d.arc((int(164*scale),int(164*scale),int(348*scale),int(348*scale)),35,225,fill=ink,width=w*3)
+        line([(190,190),(222,220),(205,244),(268,307),(292,287),(322,320)],ink,w*3)
+    elif "mail" in b or "outlook" in b or "gmail" in b:
+        d.rounded_rectangle((145*scale,185*scale,367*scale,330*scale),radius=int(22*scale),outline=ink,width=w*2)
+        line([(151,198),(256,278),(361,198)],ink,w*2)
+    elif "sms" in b or "whatsapp" in b or "telegraph" in b or "discord" in b:
+        d.rounded_rectangle((142*scale,166*scale,370*scale,316*scale),radius=int(42*scale),outline=ink,width=w*2)
+        line([(205,316),(184,350),(252,316)],ink,w*2)
+        for x in (214,256,298): d.ellipse((int((x-6)*scale),int(235*scale),int((x+6)*scale),int(247*scale)),fill=soft)
+    elif "camera" in b:
+        d.rounded_rectangle((140*scale,190*scale,372*scale,330*scale),radius=int(28*scale),outline=ink,width=w*2)
+        d.ellipse((205*scale,215*scale,307*scale,317*scale),outline=ink,width=w*2)
+        d.ellipse((235*scale,245*scale,277*scale,287*scale),outline=soft,width=w)
+        d.rounded_rectangle((185*scale,168*scale,250*scale,198*scale),radius=int(9*scale),fill=soft)
+    elif "safari" in b or "compass" in b or "maps" in b:
+        d.ellipse((155*scale,155*scale,357*scale,357*scale),outline=ink,width=w*2)
+        line([(290,190),(250,260),(220,325),(275,280),(310,205)],ink,w*2)
+        d.ellipse((245*scale,245*scale,267*scale,267*scale),fill=soft)
+    elif "music" in b or "spotify" in b or "podcast" in b:
+        line([(278,175),(278,302),(250,290),(225,300),(220,322),(240,337),(270,326),(292,307),(292,200),(344,213)],ink,w*3)
+    elif "calendar" in b:
+        d.rounded_rectangle((155*scale,165*scale,357*scale,350*scale),radius=int(22*scale),outline=ink,width=w*2)
+        line([(155,220),(357,220)],ink,w*2)
+        line([(205,145),(205,190)],ink,w*3); line([(307,145),(307,190)],ink,w*3)
+        for x,y in [(205,260),(256,260),(307,260),(205,305),(256,305),(307,305)]:
+            d.rounded_rectangle((int((x-9)*scale),int((y-9)*scale),int((x+9)*scale),int((y+9)*scale)),radius=int(5*scale),fill=soft)
+    elif "photo" in b or "mobileslideshow" in b:
+        for angle in range(0,360,60):
+            import math
+            a=math.radians(angle); x=cx+62*scale*math.cos(a); y=cy+62*scale*math.sin(a)
+            d.ellipse((x-43*scale,y-43*scale,x+43*scale,y+43*scale),fill=(220,246,255,90),outline=ink,width=w)
+        d.ellipse((cx-25*scale,cy-25*scale,cx+25*scale,cy+25*scale),fill=ink)
+    elif "settings" in b or "preferences" in b:
+        d.ellipse((180*scale,180*scale,332*scale,332*scale),outline=ink,width=w*3)
+        d.ellipse((225*scale,225*scale,287*scale,287*scale),outline=soft,width=w*2)
+        for angle in range(0,360,45):
+            import math
+            a=math.radians(angle); x1=cx+83*scale*math.cos(a); y1=cy+83*scale*math.sin(a)
+            x2=cx+112*scale*math.cos(a); y2=cy+112*scale*math.sin(a)
+            d.line((x1,y1,x2,y2),fill=ink,width=w*3)
+    elif "weather" in b:
+        d.ellipse((175*scale,210*scale,275*scale,310*scale),outline=ink,width=w*2)
+        d.arc((190*scale,215*scale,365*scale,355*scale),180,360,fill=ink,width=w*2)
+        line([(205,330),(335,330)],ink,w*2)
+    elif "appstore" in b or "mobileinstaller" in b:
+        line([(190,330),(256,180),(322,330)],ink,w*3); line([(218,270),(294,270)],ink,w*3)
+        line([(205,190),(310,325)],soft,w*2)
+    elif "clock" in b or "mobiletimer" in b:
+        d.ellipse((160*scale,160*scale,352*scale,352*scale),outline=ink,width=w*2)
+        line([(256,205),(256,260),(305,290)],ink,w*3)
+    else:
+        # A simple luminous monogram is the fallback for less common apps.
+        f=font(int(size*.27))
+        d.text((cx,cy),label[:1].upper(),font=f,fill=ink,anchor="mm")
+
 def glass_icon(bundle, label, initials, size=512):
     seed=sum((i+1)*ord(c) for i,c in enumerate(bundle))
     rng=random.Random(seed)
@@ -89,8 +154,7 @@ def glass_icon(bundle, label, initials, size=512):
     d.rounded_rectangle((size*.035,size*.035,size*.965,size*.43),radius=int(size*.20),fill=(255,255,255,24))
     d.ellipse((size*.18,size*.17,size*.82,size*.81),fill=(220,246,255,22),outline=(226,249,255,115),width=max(2,size//100))
     d.ellipse((size*.25,size*.24,size*.75,size*.74),outline=(255,255,255,65),width=max(2,size//160))
-    f=font(int(size*.25))
-    d.text((size/2,size*.49),initials,font=f,fill=(248,253,255,250),anchor="mm",stroke_width=max(1,size//300),stroke_fill=(160,220,255,120))
+    draw_app_glyph(d,bundle,size)
     d.rounded_rectangle((size*.13,size*.84,size*.87,size*.89),radius=int(size*.025),fill=(225,248,255,65))
     return im
 
