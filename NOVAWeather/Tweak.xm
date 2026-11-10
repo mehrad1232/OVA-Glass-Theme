@@ -85,8 +85,12 @@ static void NOVAGlass(UIView *view, UIBlurEffectStyle style, CGFloat radius, UIC
     wash.backgroundColor = tint;
     view.backgroundColor = UIColor.clearColor;
     view.layer.cornerRadius = radius;
-    view.layer.borderWidth = 1;
-    view.layer.borderColor = [UIColor colorWithWhite:1 alpha:border].CGColor;
+    view.layer.borderWidth = 0;
+    view.layer.borderColor = nil;
+    view.layer.shadowColor = [UIColor colorWithRed:.20 green:.48 blue:.78 alpha:.18].CGColor;
+    view.layer.shadowOpacity = .22;
+    view.layer.shadowRadius = 12;
+    view.layer.shadowOffset = CGSizeMake(0, 5);
 }
 static void NOVASnow(UIView *host) {
     if (!host || objc_getAssociatedObject(host, &kSnowKey) || CGRectIsEmpty(host.bounds)) return;
@@ -103,7 +107,7 @@ static void NOVASnow(UIView *host) {
     emitter.emitterSize = CGSizeMake(CGRectGetWidth(overlay.bounds), 1);
     CAEmitterCell *flake = [CAEmitterCell emitterCell];
     flake.contents = (__bridge id)NOVASnowImage().CGImage;
-    flake.birthRate = .42; flake.lifetime = 12;
+    flake.birthRate = .18; flake.lifetime = 10;
     flake.velocity = 15; flake.velocityRange = 8; flake.yAcceleration = 5;
     flake.scale = .12; flake.scaleRange = .08; flake.alphaSpeed = -.055;
     emitter.emitterCells = @[flake];
