@@ -111,12 +111,7 @@ static void NOVAStyleMessagesView(UIView *view) {
     @autoreleasepool {
         if (NOVAIsMessages()) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (objc_getClass("CKBalloonView") || objc_getClass("CKMessageEntryView") ||
-                    objc_getClass("CKConversationListCell")) {
-                    %init(NOVAMessagesOnly);
-                } else {
-                    %init(NOVAMessagesOnly);
-                }
+                %init(NOVAMessagesOnly);
                 UINavigationBar *bar = [UINavigationBar appearance];
                 bar.translucent = YES;
                 bar.barTintColor = [UIColor colorWithWhite:1 alpha:.66];
