@@ -1,4 +1,4 @@
-name: Build NOVA Glass for Messages (iOS 12)
+name: Build NOVA Glass for Messages 3 (iOS 12)
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
           git clone --recursive --depth 1 https://github.com/theos/theos.git "$GITHUB_WORKSPACE/theos"
           echo "THEOS=$GITHUB_WORKSPACE/theos" >> "$GITHUB_ENV"
 
-      - name: Validate Messages-only injection
+      - name: Validate Messages-only filter and visual implementation
         working-directory: NOVAWeather
         run: |
           plutil -lint NOVAWeather.plist
@@ -34,12 +34,18 @@ jobs:
           import plistlib
           with open("NOVAWeather.plist", "rb") as f:
               data = plistlib.load(f)
-          bundles = data["Filter"]["Bundles"]
-          assert bundles == ["com.apple.MobileSMS"], bundles
+          assert data["Filter"]["Bundles"] == ["com.apple.MobileSMS"]
           source = open("Tweak.xm", encoding="utf-8").read()
-          assert "com.apple.MobileSMS" in source
+          for token in ["UIVisualEffectView", "UIBlurEffect", "CAEmitterLayer",
+                        "CKMessageEntryView", "BalloonView", "CKConversationListCell"]:
+              assert token in source, "missing implementation: " + token
+          for key in ["messages.enabled", "messages.bubbles", "messages.composer",
+                      "messages.list", "messages.snow", "messages.iceBlue"]:
+              assert key in source, "missing preference: " + key
           assert "SpringBoard" not in source
-          print("PASS: tweak is injected only into Apple Messages.")
+          control = open("control", encoding="utf-8").read()
+          assert "Version: 3.0.0" in control
+          print("PASS: MobileSMS-only filter, glass surfaces, atmosphere and preferences.")
           PY
 
       - name: Compile and package arm64 rootful iOS 12 tweak
@@ -51,26 +57,23 @@ jobs:
           DEB="$(find packages -maxdepth 1 -name '*.deb' -print -quit)"
           test -n "$DEB"
           test "$(dpkg-deb -f "$DEB" Package)" = "com.nova.glass.weather"
-          test "$(dpkg-deb -f "$DEB" Version)" = "2.0.0"
+          test "$(dpkg-deb -f "$DEB" Version)" = "3.0.0"
+          test "$(dpkg-deb -f "$DEB" Architecture)" = "iphoneos-arm"
           dpkg-deb -c "$DEB" | grep -F "Library/PreferenceBundles/NOVAWeatherPrefs.bundle/"
           dpkg-deb -c "$DEB" | grep -F "Library/MobileSubstrate/DynamicLibraries/NOVAWeather.dylib"
           mkdir -p ../dist/NOVA-Glass-Messages-iOS12
           cp "$DEB" ../dist/NOVA-Glass-Messages-iOS12/
           cp README.md ../dist/NOVA-Glass-Messages-iOS12/
           cat > ../dist/NOVA-Glass-Messages-iOS12/INSTALL.txt <<'EOF'
-          NOVA GLASS FOR MESSAGES 2.0.0
+          NOVA GLASS FOR MESSAGES 3.0.0
           Target: iPhone 5s / iOS 12.5.8 / rootful jailbreak (Amethyst)
 
           Install the .deb with Sileo. Then force-close and reopen Messages.
-          Configure the switches in Settings > NOVA Messages.
-          The tweak injects only into com.apple.MobileSMS; it does not modify
-          SpringBoard, the Home Screen, Lock Screen, or other apps.
-
-          This is an iOS 12-compatible visual approximation of Liquid Glass.
-          Some internal Messages view classes are private and can vary by iOS
-          build. Compilation/package checks do not replace on-device testing.
-          To disable: turn off NOVA Messages in Settings or uninstall the
-          package from Sileo. Keep a jailbreak recovery method available.
+          Configure switches in Settings > NOVA Messages.
+          The tweak injects only into com.apple.MobileSMS.
+          It uses iOS 12 UIKit blur, glass tint, ChatKit view matching and optional snowfall.
+          ChatKit is private; the exact view hierarchy must be verified on the target device.
+          To disable, turn off Enable NOVA Glass or uninstall the package from Sileo.
           EOF
           cd ../dist
           zip -r NOVA-Glass-Messages-iOS12.zip NOVA-Glass-Messages-iOS12
@@ -79,7 +82,7 @@ jobs:
       - name: Upload Messages-only package
         uses: actions/upload-artifact@v4
         with:
-          name: NOVA-Glass-Messages-iOS12
+          name: NOVA-Glass-Messages-iOS12-v3
           path: |
             dist/NOVA-Glass-Messages-iOS12.zip
             dist/NOVA-Glass-Messages-iOS12.sha256
