@@ -12,7 +12,7 @@ static NSString * const kSuite = @"com.nova.glass.messages";
     [p registerDefaults:@{
         @"messages.enabled":@YES, @"messages.bubbles":@YES,
         @"messages.composer":@YES, @"messages.list":@YES,
-        @"messages.snow":@YES, @"messages.iceBlue":@YES
+        @"messages.snow":@NO, @"messages.iceBlue":@YES
     }];
 }
 - (NSArray *)specifiers {
@@ -29,18 +29,12 @@ static NSString * const kSuite = @"com.nova.glass.messages";
             return s;
         };
         [items addObject:sw(@"Enable NOVA Glass", @"messages.enabled")];
-        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"MESSAGE SURFACES"
-            target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil]];
         [items addObject:sw(@"Glass message bubbles", @"messages.bubbles")];
         [items addObject:sw(@"Glass composer and input", @"messages.composer")];
         [items addObject:sw(@"Frosted conversation list", @"messages.list")];
-        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"NOVA ATMOSPHERE"
-            target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil]];
         [items addObject:sw(@"Ice-blue glass tint", @"messages.iceBlue")];
-        [items addObject:sw(@"Soft falling snow", @"messages.snow")];
-        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"Designed for iPhone 5s • iOS 12"
-            target:nil set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil]];
-        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"NOVA • WHITE / ICE BLUE • LIQUID GLASS"
+        [items addObject:sw(@"Snowfall (optional)", @"messages.snow")];
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"Soft pearl and arctic glass. No outlines. Snow is off by default."
             target:nil set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil]];
         _specifiers = [items copy];
     }
