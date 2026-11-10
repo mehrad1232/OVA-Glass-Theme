@@ -141,18 +141,59 @@ def draw_glyph(d,kind,cx=256,cy=252):
         d.ellipse((125,125,387,387),outline=white,width=18); d.ellipse((205,205,307,307),fill=pale)
 
 def icon(kind,seed,size=512):
+    # Premium borderless liquid-glass tile: no perimeter stroke or white frame.
     random.seed(seed)
-    im=Image.new("RGBA",(size,size),(5,25,45,255))
-    px=im.load()
-    for y in range(size):
-        for x in range(size):
-            g=max(0,1-math.sqrt(((x-size*.22)/(size*.9))**2+((y-size*.1)/(size*.75))**2))
-            px[x,y]=(int(5+24*g),int(31+80*g),int(52+115*g),255)
+    import numpy as np
+    yy,xx=np.mgrid[0:size,0:size]
+    x=xx.astype(np.float32); y=yy.astype(np.float32)
+    palettes={
+      "phone":(58,166,210),"video":(105,126,235),"messages":(67,190,150),
+      "chat":(84,164,224),"social":(205,116,178),"community":(226,120,91),
+      "camera":(185,145,214),"mail":(85,156,210),"music":(183,112,202),
+      "play":(225,90,110),"settings":(115,153,185),"clock":(78,148,190),
+      "calendar":(226,104,105),"heart":(223,105,137),"cloud":(102,165,205),
+      "weather":(90,174,205),"home":(185,145,105),"paperplane":(87,167,218),
+      "pin":(226,125,110),"radar":(93,183,171),"compass":(98,148,212),
+      "bag":(194,151,104),"wallet":(186,151,104),"checklist":(94,177,149),
+      "notes":(195,172,104),"calculator":(105,154,185),"ruler":(116,168,188),
+      "globe":(83,156,202),"safari":(82,161,211),"spark":(150,163,225),
+      "bulb":(224,182,91),"car":(105,158,191),"bed":(169,142,187),
+      "food":(210,145,102),"people":(118,160,193),"game":(139,125,207),
+      "podcast":(170,127,208),"book":(128,157,186),"chart":(85,169,158),
+      "contacts":(102,164,190),"appstore":(92,157,208)
+    }
+    accent=palettes.get(kind,(112,158,190))
+    # Smooth radial glass illumination, gently colored by app family.
+    dx=(x-size*.27)/(size*.92); dy=(y-size*.16)/(size*.82)
+    bloom=np.maximum(0,1-np.sqrt(dx*dx+dy*dy))**1.7
+    lower=np.clip(y/(size-1),0,1)
+    edge=np.clip(np.minimum.reduce([x,y,size-1-x,size-1-y])/(size*.18),0,1)
+    arr=np.empty((size,size,4),dtype=np.uint8)
+    for c,base in enumerate((7,22,39)):
+        tint=accent[c]
+        val=base + bloom*(tint*.54) + lower*(tint*.12) + np.maximum(0,1-np.sqrt(((x-size*.84)/(size*.55))**2+((y-size*.9)/(size*.5))**2))*(tint*.13)
+        arr[:,:,c]=np.clip(val,0,255).astype(np.uint8)
+    arr[:,:,3]=255
+    im=Image.fromarray(arr,"RGBA")
     d=ImageDraw.Draw(im,"RGBA")
-    d.rounded_rectangle((8,8,size-8,size-8),radius=int(size*.22),outline=(235,250,255,210),width=5)
-    d.rounded_rectangle((22,22,size-22,size*.43),radius=80,fill=(255,255,255,22))
-    # render glyph on 512 canvas; resize after for precise 2x assets
+    # Diffuse glass reflections; highlights stay inside the icon silhouette.
+    d.ellipse((size*.06,size*.015,size*.94,size*.60),fill=(220,245,255,13))
+    d.ellipse((size*.16,size*.04,size*.83,size*.43),fill=(255,255,255,12))
+    d.polygon([(size*.02,size*.03),(size*.76,size*.03),(size*.50,size*.13),(size*.12,size*.18)],fill=(255,255,255,12))
+    # A soft colored halo behind the pictogram separates it from the background.
+    halo=Image.new("RGBA",(size,size),(0,0,0,0))
+    hd=ImageDraw.Draw(halo,"RGBA")
+    hd.ellipse((size*.22,size*.20,size*.78,size*.78),fill=(*accent,42))
+    halo=halo.filter(ImageFilter.GaussianBlur(size*.075))
+    im=Image.alpha_composite(im,halo)
+    d=ImageDraw.Draw(im,"RGBA")
     draw_glyph(d,kind)
+    # Fine top reflection and lower refraction, not an outline around the tile.
+    d.arc((size*.12,size*.08,size*.88,size*.74),198,338,fill=(255,255,255,28),width=max(1,size//170))
+    d.ellipse((size*.18,size*.80,size*.82,size*1.08),fill=(*accent,13))
+    mask=Image.new("L",(size,size),0)
+    ImageDraw.Draw(mask).rounded_rectangle((0,0,size-1,size-1),radius=int(size*.225),fill=255)
+    im.putalpha(mask)
     return im
 
 for bundle,kind in APPS:
