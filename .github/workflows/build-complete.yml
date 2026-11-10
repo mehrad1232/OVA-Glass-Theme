@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "NOVAWeather/**"
+      - "tools/**"
+      - "XenHTML/**"
       - ".github/workflows/build-complete.yml"
   workflow_dispatch:
 
@@ -81,20 +83,37 @@ jobs:
           zip -r NOVA-Glass-Messages-iOS12.zip NOVA-Glass-Messages-iOS12
           shasum -a 256 NOVA-Glass-Messages-iOS12.zip > NOVA-Glass-Messages-iOS12.sha256
 
+      - name: Validate seasonal widget
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("XenHTML/NOVA-Glass-Seasons/Wallpaper.html")
+          s=p.read_text(encoding="utf-8")
+          for token in ["spring","summer","autumn","winter","localStorage","Use automatic season","setInterval"]:
+              assert token in s, "missing seasonal feature: "+token
+          assert "com.apple.MobileSMS" not in s
+          print("PASS: four seasons, automatic/manual selection and isolated Xen HTML widget.")
+          PY
+
       - name: Generate complete borderless glass theme
         run: |
           python3 tools/build_theme.py
           python3 tools/build_complete_artwork.py
           mkdir -p dist/NOVA-Glass-Complete-iOS12
           cp -R "NOVA Glass.theme" dist/NOVA-Glass-Complete-iOS12/
+          mkdir -p dist/NOVA-Glass-Complete-iOS12/Optional-XenHTML
+          cp -R XenHTML/NOVA-Glass-Seasons dist/NOVA-Glass-Complete-iOS12/Optional-XenHTML/
           cp dist/NOVA-Glass-Messages-iOS12/*.deb dist/NOVA-Glass-Complete-iOS12/ 2>/dev/null || true
           cat > dist/NOVA-Glass-Complete-iOS12/INSTALL.txt <<'EOF'
           NOVA GLASS COMPLETE EDITION
           Target: iPhone 5s / iOS 12.5.8 / rootful Amethyst + SnowBoard
           Apply the icon theme in SnowBoard. Choose one of the included wallpapers.
-          The Messages tweak .deb is included separately.
-          Borderless glass artwork with Pearl, Arctic, Lavender, Rose, Mint and Night palettes.
-          This is a SnowBoard theme pack; it does not reskin the iOS Settings application layout.
+          Optional seasonal animation: install compatible Xen HTML for iOS 12, then copy
+          Optional-XenHTML/NOVA-Glass-Seasons to /var/mobile/Library/SBHTML/ and enable it.
+          The widget supports automatic seasons and manual Spring/Summer/Autumn/Winter selection.
+          Xen HTML is optional and is NOT installed by this theme. SnowBoard alone does not run HTML widgets.
+          The Messages tweak .deb is separate and only injects into Apple Messages.
+          No SpringBoard tweak or Settings layout modification is included in the seasonal widget.
           EOF
           cd dist
           zip -r -0 NOVA-Glass-Complete-iOS12.zip NOVA-Glass-Complete-iOS12
@@ -104,7 +123,7 @@ jobs:
       - name: Upload complete theme and Messages package
         uses: actions/upload-artifact@v4
         with:
-          name: NOVA-Glass-Complete-iOS12-v4
+          name: NOVA-Glass-Complete-iOS12-v5
           path: |
             dist/NOVA-Glass-Complete-iOS12.zip
             dist/NOVA-Glass-Complete-iOS12.sha256
