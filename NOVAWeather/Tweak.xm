@@ -116,7 +116,7 @@ static void NOVASnow(UIView *host) {
     objc_setAssociatedObject(host, &kSnowKey, overlay, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 static void NOVAStyle(UIView *view) {
-    if (!NOVASetting(@"messages.enabled", YES) || !NOVAMessages()) return;
+    if (!NOVASetting(@"messages.enabled", NO) || !NOVAMessages()) return;
     NSString *name = NSStringFromClass(view.class);
     BOOL ice = NOVASetting(@"messages.iceBlue", YES);
     if (NOVASetting(@"messages.bubbles", YES) && NOVAHas(name, @[@"BalloonView"])) {
