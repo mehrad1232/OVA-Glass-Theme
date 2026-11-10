@@ -1,22 +1,9 @@
-# NOVA Glass — iPhone 5s / iOS 12
+# NOVA Glass — Messages Edition
 
-Unified rootful jailbreak customization for iPhone 5s / iOS 12.5.8: SnowBoard icons, SpringBoard weather effects, editable settings and an original ringtone.
+NOVA Glass for Messages 3.0 is a rootful arm64 jailbreak tweak for Apple Messages on iOS 12, targeting iPhone 5s / iOS 12.5.8.
 
-## Features
-- SnowBoard app and Settings icon theme.
-- Home Screen sunlight glow from 07:00 to 13:59 and snowfall from 14:00 to 06:59.
-- Independent Settings switches for master effects, sunlight and snowfall; changes apply immediately.
-- Touch-through overlays placed behind Home Screen content. Control Center is deliberately left unobstructed so its controls remain usable.
-- Original NOVA ringtone.
+The Messages edition focuses on ChatKit balloons, composer, navigation and toolbar, conversation-list cells, an icy backdrop and restrained snowfall. It uses UIKit blur and tint layers supported by iOS 12, not the native Liquid Glass framework introduced in later iOS versions.
 
-## Build
-Open Actions → Build NOVA Glass Complete iOS 12 Package and download the `NOVA-Glass-Full-iOS12` artifact. The package targets rootful arm64 and iOS 12.
+The injection filter targets only com.apple.MobileSMS. It does not inject into SpringBoard, the Home Screen, Lock Screen or other apps.
 
-## Install
-1. Back up the iPhone.
-2. Install the new `com.nova.glass.weather` Debian package in Sileo as an upgrade.
-3. Enable NOVA Glass in SnowBoard.
-4. Open Settings → NOVA Glass and choose the three effect switches.
-
-## Safety
-This tweak uses private SpringBoard classes. A successful GitHub build proves compilation and packaging, not runtime certification. Test on iPhone 5s / iOS 12.5.8. If SpringBoard becomes unstable, remove `com.nova.glass.weather` in Sileo or over SSH and respring.
+Builds are produced by GitHub Actions. See NOVAWeather/README.md for installation and compatibility notes.

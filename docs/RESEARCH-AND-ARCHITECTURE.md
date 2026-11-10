@@ -1,28 +1,18 @@
-# NOVA Glass — technical research and implementation notes
+# NOVA Glass Messages 3.0 — research and architecture
 
-Target: iPhone 5s, iOS 12.5.8, rootful Amethyst, Sileo and SnowBoard.
+## Research basis
+- Theos Logos documentation: https://theos.dev/docs/logos
+- Theos package documentation, including the MobileSubstrate bundle filter plist: https://theos.dev/docs/packaging
+- Apple UIKit documentation for UIVisualEffectView and UIBlurEffect. Blur views must be composed correctly; fading the effect view or its superview can prevent correct rendering: https://developer.apple.com/documentation/uikit/uivisualeffectview and https://developer.apple.com/documentation/uikit/uiblureffect
+- ChatKit is Apple's private SMS/iMessage UI framework. iOS 11 runtime-header indexes list CKBalloonView, CKMessageEntryView, CKConversationListCell and CKConversationListTableView. These are research references, not a guarantee that every class is identical on iOS 12.5.8: https://developer.limneos.net/?framework=ChatKit.framework&ios=11.1.2 and https://theapplewiki.com/wiki/Dev%3AChatKit.framework/Inheritance_hierarchy
 
-## Runtime behavior
+## Runtime architecture
+- Substrate injection is restricted to com.apple.MobileSMS.
+- Logos hooks UIView layout as a compatibility fallback, then styles only runtime class names matching known ChatKit balloon, composer, conversation-list or transcript families.
+- Glass uses a full-opacity UIVisualEffectView, a separate translucent tint/gradient layer and a fine border.
+- Snow is a low-birth-rate CAEmitterLayer behind transcript/list content, touch-through and clipped to its host view.
+- Preferences use the com.nova.glass.messages defaults suite and independent feature keys.
 
-- The weather overlay is attached to the SpringBoard icon controller's own view, inserted behind its content. This keeps the effect on the Home Screen rather than whichever window happens to be key while SpringBoard launches.
-- The Lock Screen receives only a restrained, touch-through glass treatment.
-- The full-screen Control Center overlay was removed so Control Center controls remain visible and usable.
-- All overlays are non-interactive and inserted behind host content.
-- Preferences are stored in the `com.nova.glass.weather` defaults suite and broadcast through a Darwin notification. Changes apply immediately without a respring.
-
-## Settings
-
-Settings → NOVA Glass exposes three switches:
-- Enable NOVA effects
-- Daylight glow (07:00–13:59)
-- Night snowfall (14:00–06:59)
-
-The schedule follows the device's local clock. Each weather switch can be controlled independently.
-
-## Build and installation
-
-The GitHub Actions workflow builds the rootful arm64 package for iOS 12 and packages the SnowBoard theme and ringtone with it. Install the newly generated `.deb` in Sileo as an upgrade. Back up the device first.
-
-## Compatibility note
-
-The tweak uses private SpringBoard classes. A successful compile is not a guarantee of runtime compatibility on every Amethyst/Sonar configuration. Test on the target iPhone 5s / iOS 12.5.8. If SpringBoard becomes unstable, remove `com.nova.glass.weather` from Sileo or SSH and respring.
+## Compatibility and validation
+Target: arm64 rootful iOS 12.0+, with iPhone 5s / iOS 12.5.8 as the target device.
+ChatKit is private and its view tree can vary. Runtime verification on the target iPhone remains necessary; CI verifies compilation, package metadata and injection scope, but cannot prove visual output on the phone.

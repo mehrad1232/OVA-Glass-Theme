@@ -3,7 +3,6 @@
 #import <Preferences/PSSpecifier.h>
 
 static NSString * const kSuite = @"com.nova.glass.messages";
-
 @interface NOVAWeatherPrefsController : PSListController @end
 @implementation NOVAWeatherPrefsController
 - (void)viewDidLoad {
@@ -11,16 +10,15 @@ static NSString * const kSuite = @"com.nova.glass.messages";
     self.title = @"NOVA Messages";
     NSUserDefaults *p = [[NSUserDefaults alloc] initWithSuiteName:kSuite];
     [p registerDefaults:@{
-        @"messages.enabled":@YES,
-        @"messages.bubbles":@YES,
-        @"messages.composer":@YES,
-        @"messages.list":@YES
+        @"messages.enabled":@YES, @"messages.bubbles":@YES,
+        @"messages.composer":@YES, @"messages.list":@YES,
+        @"messages.snow":@YES, @"messages.iceBlue":@YES
     }];
 }
 - (NSArray *)specifiers {
     if (!_specifiers) {
         NSMutableArray *items = [NSMutableArray array];
-        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"NOVA GLASS FOR MESSAGES"
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"NOVA GLASS • MESSAGES"
             target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil]];
         PSSpecifier *(^sw)(NSString *,NSString *) = ^PSSpecifier *(NSString *title, NSString *key) {
             PSSpecifier *s = [PSSpecifier preferenceSpecifierNamed:title target:self
@@ -30,13 +28,17 @@ static NSString * const kSuite = @"com.nova.glass.messages";
             [s setProperty:@YES forKey:@"default"];
             return s;
         };
-        [items addObject:sw(@"Enable NOVA Messages", @"messages.enabled")];
-        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"CONVERSATION DESIGN"
+        [items addObject:sw(@"Enable NOVA Glass", @"messages.enabled")];
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"MESSAGE SURFACES"
             target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil]];
-        [items addObject:sw(@"Liquid Glass message bubbles", @"messages.bubbles")];
-        [items addObject:sw(@"Glass composer and text field", @"messages.composer")];
+        [items addObject:sw(@"Glass message bubbles", @"messages.bubbles")];
+        [items addObject:sw(@"Glass composer and input", @"messages.composer")];
         [items addObject:sw(@"Frosted conversation list", @"messages.list")];
-        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"Designed exclusively for Apple Messages on iOS 12."
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"NOVA ATMOSPHERE"
+            target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil]];
+        [items addObject:sw(@"Ice-blue glass tint", @"messages.iceBlue")];
+        [items addObject:sw(@"Soft falling snow", @"messages.snow")];
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"Designed for iPhone 5s • iOS 12"
             target:nil set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil]];
         [items addObject:[PSSpecifier preferenceSpecifierNamed:@"NOVA • WHITE / ICE BLUE • LIQUID GLASS"
             target:nil set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil]];
