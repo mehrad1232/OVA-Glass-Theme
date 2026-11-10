@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#101b2a">
+<title>NOVA Glass Seasons</title>
+<style>
+:root{--sky1:#172b46;--sky2:#426b86;--glow:rgba(255,220,155,.48);--particle:#fff;--accent:#dceeff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif}
+#nova{position:absolute;inset:0;overflow:hidden;pointer-events:none;background:linear-gradient(155deg,var(--sky1),var(--sky2) 58%,#101a2c);transition:background 1.8s ease}
+#nova:before{content:"";position:absolute;width:120vw;height:80vh;left:-35vw;top:-35vh;background:radial-gradient(ellipse,var(--glow),transparent 68%);filter:blur(18px);opacity:.8;animation:light 18s ease-in-out infinite alternate}
+.haze{position:absolute;inset:45% -20% -15%;border-radius:50% 50% 0 0;background:linear-gradient(160deg,rgba(255,255,255,.15),rgba(7,18,36,.34));filter:blur(9px)}
+.glass{position:absolute;inset:7% 6%;border-radius:34px;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.025) 55%,rgba(160,215,255,.08));-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 18px 50px rgba(0,0,0,.12)}
+.glass:after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(118deg,rgba(255,255,255,.13),transparent 28%,transparent 70%,rgba(255,255,255,.035))}
+#particles{position:absolute;inset:0;overflow:hidden}
+.particle{position:absolute;top:-12vh;left:var(--x);width:var(--s);height:var(--s);opacity:var(--o);background:var(--particle);border-radius:var(--shape,50%);filter:drop-shadow(0 0 5px rgba(255,255,255,.3));animation:drift var(--dur) linear var(--delay) infinite;transform:rotate(var(--rot))}
+#season-chip{position:absolute;left:10%;bottom:9%;color:rgba(255,255,255,.68);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;text-shadow:0 1px 8px #0005}
+#gear{position:absolute;right:9%;bottom:8%;width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:17px;pointer-events:auto;-webkit-tap-highlight-color:transparent}
+#panel{display:none;position:absolute;right:7%;bottom:15%;width:190px;padding:13px;border-radius:18px;background:rgba(15,28,47,.78);border:1px solid rgba(255,255,255,.15);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:#fff;pointer-events:auto;box-shadow:0 12px 35px #0005}
+#panel.open{display:block}#panel strong{display:block;font-size:11px;letter-spacing:1.2px;margin:0 0 9px;color:#dceeff}
+#choices{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#choices button,#mode{border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:9px 6px;background:rgba(255,255,255,.08);color:#fff;font-size:11px}
+#choices button[aria-pressed=true]{background:rgba(174,218,255,.28);border-color:rgba(210,238,255,.5)}
+#mode{width:100%;margin-top:8px}
+@keyframes drift{0%{transform:translate3d(0,-5vh,0) rotate(0)}50%{transform:translate3d(5vw,52vh,0) rotate(180deg)}100%{transform:translate3d(-3vw,115vh,0) rotate(360deg)}}
+@keyframes light{from{transform:translate3d(-4vw,0,0);opacity:.5}to{transform:translate3d(13vw,8vh,0);opacity:1}}
+@media(prefers-reduced-motion:reduce){.particle,#nova:before{animation:none!important}}
+</style>
+</head>
+<body>
+<div id="nova" data-season="winter">
+  <div class="haze"></div><div class="glass"></div><div id="particles" aria-hidden="true"></div>
+  <div id="season-chip">WINTER · AUTO</div>
+  <button id="gear" aria-label="Season settings">✧</button>
+  <section id="panel" aria-label="Season settings">
+    <strong>NOVA · SEASONS</strong>
+    <div id="choices">
+      <button data-value="spring">🌸 Spring</button><button data-value="summer">☀️ Summer</button>
+      <button data-value="autumn">🍂 Autumn</button><button data-value="winter">❄️ Winter</button>
+    </div>
+    <button id="mode">Use automatic season</button>
+  </section>
+</div>
+<script>
+(function(){
+"use strict";
+var root=document.getElementById("nova"),particles=document.getElementById("particles");
+var chip=document.getElementById("season-chip"),panel=document.getElementById("panel");
+var key="nova.glass.season.override",names={spring:"SPRING",summer:"SUMMER",autumn:"AUTUMN",winter:"WINTER"};
+var palettes={
+ spring:["#263e54","#a5bcae","rgba(255,211,224,.46)","#ffe2ed","48%"],
+ summer:["#17415d","#4d91a4","rgba(255,222,151,.64)","#ffe8b5","72%"],
+ autumn:["#392d35","#a66c48","rgba(255,173,91,.42)","#e9a65f","50%"],
+ winter:["#152944","#527b9b","rgba(184,222,255,.42)","#f1f8ff","46%"]
+};
+function automatic(){var m=(new Date()).getMonth()+1;return m>=3&&m<=5?"spring":m>=6&&m<=8?"summer":m>=9&&m<=11?"autumn":"winter"}
+function current(){try{var v=localStorage.getItem(key);return v&&names[v]?v:"auto"}catch(e){return"auto"}}
+function setSeason(s){
+ var actual=s==="auto"?automatic():s,p=palettes[actual];
+ root.dataset.season=actual;root.style.setProperty("--sky1",p[0]);root.style.setProperty("--sky2",p[1]);root.style.setProperty("--glow",p[2]);root.style.setProperty("--particle",p[3]);
+ chip.textContent=names[actual]+" · "+(s==="auto"?"AUTO":"MANUAL");
+ document.querySelectorAll("#choices button").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.value===s))});
+ document.getElementById("mode").textContent=s==="auto"?"Automatic season is active":"Use automatic season";
+ draw(actual);
+}
+function draw(s){
+ var count=s==="summer"?9:15,frag=document.createDocumentFragment();
+ particles.innerHTML="";
+ for(var i=0;i<count;i++){
+  var el=document.createElement("i");el.className="particle";
+  var size=s==="autumn"?8+Math.random()*13:s==="spring"?5+Math.random()*8:2+Math.random()*4;
+  el.style.setProperty("--x",(Math.random()*100)+"%");
+  el.style.setProperty("--s",size+"px");
+  el.style.setProperty("--o",(.28+Math.random()*.55).toFixed(2));
+  el.style.setProperty("--dur",(s==="summer"?8:12+Math.random()*12)+"s");
+  el.style.setProperty("--delay",(-Math.random()*22)+"s");
+  el.style.setProperty("--rot",Math.round(Math.random()*180)+"deg");
+  if(s==="autumn"){el.style.borderRadius="2px 9px 2px 9px";el.style.transform="rotate(35deg)"}
+  if(s==="spring"){el.style.borderRadius="90% 10% 90% 10%"}
+  if(s==="summer"){el.style.width=(size*1.8)+"px";el.style.height=(size*1.8)+"px";el.style.filter="blur(2px)"}
+  frag.appendChild(el);
+ }
+ particles.appendChild(frag);
+}
+document.getElementById("gear").addEventListener("click",function(){panel.classList.toggle("open")});
+document.querySelectorAll("#choices button").forEach(function(b){b.addEventListener("click",function(){try{localStorage.setItem(key,b.dataset.value)}catch(e){}setSeason(b.dataset.value)})});
+document.getElementById("mode").addEventListener("click",function(){try{localStorage.removeItem(key)}catch(e){}setSeason("auto")});
+function refresh(){var v=current();setSeason(v)}
+refresh();setInterval(function(){if(current()==="auto")refresh()},3600000);
+})();
+</script>
+</body>
+</html>
