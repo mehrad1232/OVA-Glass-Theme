@@ -1,4 +1,4 @@
-name: Build NOVA Glass for Messages 3 (iOS 12)
+name: Build NOVA Glass Complete Edition (iOS 12)
 
 on:
   push:
@@ -18,8 +18,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install package tools
-        run: brew install ldid dpkg
+      - name: Install package and artwork tools
+        run: |
+          brew install ldid dpkg
+          python3 -m pip install --break-system-packages Pillow numpy
 
       - name: Install Theos
         run: |
@@ -79,11 +81,33 @@ jobs:
           zip -r NOVA-Glass-Messages-iOS12.zip NOVA-Glass-Messages-iOS12
           shasum -a 256 NOVA-Glass-Messages-iOS12.zip > NOVA-Glass-Messages-iOS12.sha256
 
-      - name: Upload Messages-only package
+      - name: Generate complete borderless glass theme
+        run: |
+          python3 tools/build_theme.py
+          python3 tools/build_complete_artwork.py
+          mkdir -p dist/NOVA-Glass-Complete-iOS12
+          cp -R "NOVA Glass.theme" dist/NOVA-Glass-Complete-iOS12/
+          cp dist/NOVA-Glass-Messages-iOS12/*.deb dist/NOVA-Glass-Complete-iOS12/ 2>/dev/null || true
+          cat > dist/NOVA-Glass-Complete-iOS12/INSTALL.txt <<'EOF'
+          NOVA GLASS COMPLETE EDITION
+          Target: iPhone 5s / iOS 12.5.8 / rootful Amethyst + SnowBoard
+          Apply the icon theme in SnowBoard. Choose one of the included wallpapers.
+          The Messages tweak .deb is included separately.
+          Borderless glass artwork with Pearl, Arctic, Lavender, Rose, Mint and Night palettes.
+          This is a SnowBoard theme pack; it does not reskin the iOS Settings application layout.
+          EOF
+          cd dist
+          zip -r -0 NOVA-Glass-Complete-iOS12.zip NOVA-Glass-Complete-iOS12
+          shasum -a 256 NOVA-Glass-Complete-iOS12.zip > NOVA-Glass-Complete-iOS12.sha256
+          ls -lh NOVA-Glass-Complete-iOS12.zip
+
+      - name: Upload complete theme and Messages package
         uses: actions/upload-artifact@v4
         with:
-          name: NOVA-Glass-Messages-iOS12-v3
+          name: NOVA-Glass-Complete-iOS12-v4
           path: |
+            dist/NOVA-Glass-Complete-iOS12.zip
+            dist/NOVA-Glass-Complete-iOS12.sha256
             dist/NOVA-Glass-Messages-iOS12.zip
             dist/NOVA-Glass-Messages-iOS12.sha256
           if-no-files-found: error
