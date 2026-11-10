@@ -1,8 +1,8 @@
 Package: com.nova.glass.weather
-Name: NOVA Glass Complete
-Version: 1.0.3
+Name: NOVA Glass for Messages
+Version: 2.0.0
 Architecture: iphoneos-arm
-Description: NOVA Glass weather, motion-reactive nature effects, Messages glass styling, theme, preferences and original ringtone for rootful iOS 12.
+Description: Messages-only Liquid Glass redesign for Apple Messages on rootful iOS 12. Frosted conversation list, glass message balloons, composer and blue-white translucent navigation.
 Maintainer: NOVA
 Author: NOVA
 Section: Tweaks
