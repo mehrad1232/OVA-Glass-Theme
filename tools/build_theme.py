@@ -173,24 +173,28 @@ WALLSPECS=[
 ("NOVA-Glass-Snow-iPhone5s.png","NOVA-Glass-Snow-Master.png",((8,19,43),(53,82,119),(3,8,20)),606,True),
 ]
 def wallpaper(path, width, height, palette, seed, snow):
-    rng=random.Random(seed)
-    im=Image.new("RGB",(width,height))
-    p=im.load()
-    for y in range(height):
-        t=y/(height-1)
-        for x in range(width):
-            glow=max(0,1-math.sqrt(((x-width*.22)/(width*.82))**2+((y-height*.12)/(height*.68))**2))
-            v=tuple(int(palette[i][0]+(palette[i][1]-palette[i][0])*glow+(palette[i][2]-palette[i][0])*t) for i in range(3))
-            grain=rng.randint(-18,18)
-            p[x,y]=tuple(max(0,min(255,c+grain)) for c in v)
+    # Vectorized rendering keeps GitHub Actions builds fast even for 1170x2532 masters.
+    import numpy as np
+    rng=np.random.default_rng(seed)
+    yy,xx=np.mgrid[0:height,0:width]
+    x=xx.astype(np.float32); y=yy.astype(np.float32)
+    glow=np.maximum(0,1-np.sqrt(((x-width*.22)/(width*.82))**2+((y-height*.12)/(height*.68))**2))
+    t=y/max(1,height-1)
+    arr=np.empty((height,width,3),dtype=np.float32)
+    for c in range(3):
+        arr[:,:,c]=palette[c][0]+(palette[c][1]-palette[c][0])*glow+(palette[c][2]-palette[c][0])*t
+    arr += rng.integers(-18,19,size=(height,width,1),dtype=np.int16)
+    arr=np.clip(arr,0,255).astype(np.uint8)
+    im=Image.fromarray(arr,"RGB")
     d=ImageDraw.Draw(im,"RGBA")
     d.ellipse((-width*.35,-height*.25,width*.68,height*.34),fill=(165,225,255,20),outline=(235,250,255,75),width=max(2,width//400))
     d.ellipse((width*.48,height*.52,width*1.35,height*1.12),outline=(185,225,255,50),width=max(2,width//500))
     d.rounded_rectangle((width*.055,height*.035,width*.945,height*.965),radius=int(width*.08),outline=(225,245,255,55),width=max(2,width//500))
     if snow:
         for _ in range(int(width*height/6000)):
-            x=rng.randrange(width); y=rng.randrange(height); r=rng.choice((1,1,2,max(2,width//900)))
-            d.ellipse((x-r,y-r,x+r,y+r),fill=(239,249,255,rng.randrange(95,225)))
+            x0=int(rng.integers(width)); y0=int(rng.integers(height))
+            r=int(rng.choice((1,1,2,max(2,width//900))))
+            d.ellipse((x0-r,y0-r,x0+r,y0+r),fill=(239,249,255,int(rng.integers(95,225))))
     im.save(path,format="PNG",optimize=False)
 
 for small,master,palette,seed,snow in WALLSPECS:
