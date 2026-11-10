@@ -1,41 +1,91 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
+#import <CoreMotion/CoreMotion.h>
 #import <objc/runtime.h>
 
 @interface SBIconController : UIViewController @end
 @interface SBIconImageView : UIImageView @end
 @interface CSCoverSheetViewController : UIViewController @end
 
-static NSString * const kNOVAEnabledKey = @"com.nova.glass.enabled";
-static NSString * const kNOVASunEnabledKey = @"com.nova.glass.sun.enabled";
-static NSString * const kNOVASnowEnabledKey = @"com.nova.glass.snow.enabled";
-static NSString * const kNOVAPrefsSuite = @"com.nova.glass.weather";
-static CFStringRef const kNOVAPrefsChanged = CFSTR("com.nova.glass/preferences-changed");
-
-static BOOL NOVASettingEnabled(NSString *key) {
-    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:kNOVAPrefsSuite];
-    id value = [prefs objectForKey:key];
-    return value ? [value boolValue] : YES;
+static NSString * const kSuite = @"com.nova.glass.weather";
+static NSString * const kEnabled = @"com.nova.glass.enabled";
+static NSString * const kSun = @"com.nova.glass.sun.enabled";
+static NSString * const kSnow = @"com.nova.glass.snow.enabled";
+static NSString * const kRain = @"com.nova.glass.rain.enabled";
+static NSString * const kLeaves = @"com.nova.glass.leaves.enabled";
+static CFStringRef const kChanged = CFSTR("com.nova.glass/preferences-changed");
+static BOOL NOVAGet(NSString *key) {
+    NSUserDefaults *p = [[NSUserDefaults alloc] initWithSuiteName:kSuite];
+    id v = [p objectForKey:key];
+    return v ? [v boolValue] : YES;
 }
-static BOOL NOVAEnabled(void) { return NOVASettingEnabled(kNOVAEnabledKey); }
-static BOOL NOVASunEnabled(void) { return NOVASettingEnabled(kNOVASunEnabledKey); }
-static BOOL NOVASnowEnabled(void) { return NOVASettingEnabled(kNOVASnowEnabledKey); }
+static BOOL NOVAOn(void) { return NOVAGet(kEnabled); }
 
 @interface NOVAGlassOverlay : UIView
-@property(nonatomic,strong) CAGradientLayer *sunLayer;
-@property(nonatomic,strong) CAEmitterLayer *snowLayer;
-@property(nonatomic,strong) NSTimer *clockTimer;
-- (void)updateForClock;
+@property(nonatomic,strong) CAGradientLayer *sun;
+@property(nonatomic,strong) CAEmitterLayer *snow;
+@property(nonatomic,strong) CAEmitterLayer *rain;
+@property(nonatomic,strong) CAEmitterLayer *leaves;
+@property(nonatomic,strong) CMMotionManager *motion;
+@property(nonatomic,assign) BOOL motionActive;
+- (void)refresh;
 @end
 
-static void NOVAOverlayPreferencesChanged(CFNotificationCenterRef center, void *observer,
-                                          CFStringRef name, const void *object,
-                                          CFDictionaryRef userInfo) {
-    NOVAGlassOverlay *overlay = (__bridge NOVAGlassOverlay *)observer;
-    dispatch_async(dispatch_get_main_queue(), ^{ [overlay updateForClock]; });
+static void NOVAPrefsChanged(CFNotificationCenterRef c, void *observer, CFStringRef n,
+                             const void *o, CFDictionaryRef info) {
+    NOVAGlassOverlay *v = (__bridge NOVAGlassOverlay *)observer;
+    dispatch_async(dispatch_get_main_queue(), ^{ [v refresh]; });
 }
 
 @implementation NOVAGlassOverlay
+- (UIImage *)particle:(NSInteger)kind {
+    CGSize s = kind == 0 ? CGSizeMake(18,18) : (kind == 1 ? CGSizeMake(5,22) : CGSizeMake(22,14));
+    UIGraphicsBeginImageContextWithOptions(s, NO, 0);
+    CGContextRef c = UIGraphicsGetCurrentContext();
+    if (kind == 0) {
+        CGContextSetStrokeColorWithColor(c, [UIColor colorWithWhite:1 alpha:.95].CGColor);
+        CGContextSetLineWidth(c, 1.5);
+        CGContextMoveToPoint(c,9,1); CGContextAddLineToPoint(c,9,17);
+        CGContextMoveToPoint(c,1,9); CGContextAddLineToPoint(c,17,9);
+        CGContextMoveToPoint(c,3,3); CGContextAddLineToPoint(c,15,15);
+        CGContextMoveToPoint(c,15,3); CGContextAddLineToPoint(c,3,15);
+        CGContextStrokePath(c);
+    } else if (kind == 1) {
+        CGContextSetFillColorWithColor(c, [UIColor colorWithRed:.70 green:.88 blue:1 alpha:.8].CGColor);
+        CGContextFillEllipseInRect(c, CGRectMake(1,0,3,20));
+    } else {
+        CGContextSetFillColorWithColor(c, [UIColor colorWithRed:.96 green:.57 blue:.22 alpha:.92].CGColor);
+        CGContextMoveToPoint(c,1,7); CGContextAddQuadCurveToPoint(c,11,-2,21,5);
+        CGContextAddQuadCurveToPoint(c,18,14,5,13); CGContextClosePath(c); CGContextFillPath(c);
+        CGContextSetStrokeColorWithColor(c, [UIColor colorWithRed:.45 green:.23 blue:.08 alpha:.8].CGColor);
+        CGContextSetLineWidth(c,1); CGContextMoveToPoint(c,4,10); CGContextAddLineToPoint(c,18,4); CGContextStrokePath(c);
+    }
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
+}
+- (CAEmitterLayer *)emitterWithImage:(UIImage *)image rate:(float)rate lifetime:(float)life
+                            velocity:(float)velocity scale:(float)scale spin:(float)spin {
+    CAEmitterLayer *layer = [CAEmitterLayer layer];
+    layer.emitterShape = kCAEmitterLayerLine;
+    layer.emitterMode = kCAEmitterLayerSurface;
+    layer.renderMode = kCAEmitterLayerOldestFirst;
+    CAEmitterCell *cell = [CAEmitterCell emitterCell];
+    cell.contents = (id)image.CGImage;
+    cell.birthRate = rate;
+    cell.lifetime = life;
+    cell.velocity = velocity;
+    cell.velocityRange = velocity * .48;
+    cell.xAcceleration = 5;
+    cell.yAcceleration = 10;
+    cell.scale = scale;
+    cell.scaleRange = scale * .5;
+    cell.alphaSpeed = -.012;
+    cell.spinRange = spin;
+    layer.emitterCells = @[cell];
+    layer.birthRate = 0;
+    return layer;
+}
 - (instancetype)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {
         self.backgroundColor = UIColor.clearColor;
@@ -43,150 +93,116 @@ static void NOVAOverlayPreferencesChanged(CFNotificationCenterRef center, void *
         self.clipsToBounds = YES;
         self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
-        _sunLayer = [CAGradientLayer layer];
-        _sunLayer.startPoint = CGPointMake(.15, .1);
-        _sunLayer.endPoint = CGPointMake(.85, .9);
-        _sunLayer.colors = @[(id)[UIColor colorWithRed:1 green:.82 blue:.38 alpha:.62].CGColor,
-                             (id)[UIColor colorWithRed:1 green:.94 blue:.72 alpha:.24].CGColor,
-                             (id)UIColor.clearColor.CGColor];
-        _sunLayer.locations = @[@0,@.42,@1];
-        [self.layer addSublayer:_sunLayer];
+        _sun = [CAGradientLayer layer];
+        _sun.startPoint = CGPointMake(.12,0); _sun.endPoint = CGPointMake(.88,1);
+        _sun.colors = @[(id)[UIColor colorWithRed:1 green:.78 blue:.30 alpha:.48].CGColor,
+                        (id)[UIColor colorWithRed:1 green:.91 blue:.68 alpha:.17].CGColor,
+                        (id)UIColor.clearColor.CGColor];
+        _sun.locations = @[@0,@.42,@1];
+        [self.layer addSublayer:_sun];
 
-        _snowLayer = [CAEmitterLayer layer];
-        _snowLayer.emitterShape = kCAEmitterLayerLine;
-        _snowLayer.emitterMode = kCAEmitterLayerSurface;
-        CAEmitterCell *flake = [CAEmitterCell emitterCell];
-        flake.contents = (id)[self snowflakeImage].CGImage;
-        // Dense layered snowfall: small distant flakes, medium flakes and
-        // larger foreground flakes share the full-width emitter.
-        flake.birthRate = 105;
-        flake.lifetime = 18;
-        flake.velocity = 42;
-        flake.velocityRange = 34;
-        flake.xAcceleration = 7;
-        flake.yAcceleration = 10;
-        flake.scale = .30;
-        flake.scaleRange = .20;
-        flake.alphaSpeed = -.010;
-        flake.spinRange = 1.4;
+        _snow = [self emitterWithImage:[self particle:0] rate:34 lifetime:17 velocity:42 scale:.34 spin:1.8];
+        _rain = [self emitterWithImage:[self particle:1] rate:55 lifetime:5 velocity:235 scale:.7 spin:.05];
+        _leaves = [self emitterWithImage:[self particle:2] rate:12 lifetime:13 velocity:34 scale:.65 spin:3.4];
+        [self.layer addSublayer:_snow]; [self.layer addSublayer:_rain]; [self.layer addSublayer:_leaves];
 
-        CAEmitterCell *mediumFlake = [CAEmitterCell emitterCell];
-        mediumFlake.contents = flake.contents;
-        mediumFlake.birthRate = 58;
-        mediumFlake.lifetime = 17;
-        mediumFlake.velocity = 58;
-        mediumFlake.velocityRange = 34;
-        mediumFlake.xAcceleration = 10;
-        mediumFlake.yAcceleration = 12;
-        mediumFlake.scale = .46;
-        mediumFlake.scaleRange = .18;
-        mediumFlake.alphaSpeed = -.012;
-        mediumFlake.spinRange = 1.8;
-
-        CAEmitterCell *largeFlake = [CAEmitterCell emitterCell];
-        largeFlake.contents = flake.contents;
-        largeFlake.birthRate = 28;
-        largeFlake.lifetime = 14;
-        largeFlake.velocity = 68;
-        largeFlake.velocityRange = 38;
-        largeFlake.xAcceleration = 13;
-        largeFlake.yAcceleration = 15;
-        largeFlake.scale = .66;
-        largeFlake.scaleRange = .20;
-        largeFlake.alphaSpeed = -.018;
-        largeFlake.spinRange = 2.2;
-
-        _snowLayer.emitterCells = @[flake, mediumFlake, largeFlake];
-        [self.layer addSublayer:_snowLayer];
-
+        _motion = [[CMMotionManager alloc] init];
+        _motion.accelerometerUpdateInterval = .10;
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(appActive)
+            name:UIApplicationDidBecomeActiveNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(appInactive)
+            name:UIApplicationWillResignActiveNotification object:nil];
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
-            (__bridge const void *)self, NOVAOverlayPreferencesChanged,
-            kNOVAPrefsChanged, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
-
-        [self updateForClock];
-        _clockTimer = [NSTimer scheduledTimerWithTimeInterval:60
-            target:self selector:@selector(updateForClock) userInfo:nil repeats:YES];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateForClock)
-            name:NSSystemTimeZoneDidChangeNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateForClock)
-            name:NSSystemClockDidChangeNotification object:nil];
+            (__bridge const void *)self, NOVAPrefsChanged, kChanged, NULL,
+            CFNotificationSuspensionBehaviorDeliverImmediately);
+        [self refresh];
     }
     return self;
 }
-- (UIImage *)snowflakeImage {
-    UIGraphicsBeginImageContextWithOptions(CGSizeMake(18,18), NO, 0);
-    CGContextRef c = UIGraphicsGetCurrentContext();
-    CGContextSetStrokeColorWithColor(c, [UIColor colorWithWhite:1 alpha:.92].CGColor);
-    CGContextSetLineWidth(c, 1.6);
-    CGContextMoveToPoint(c,9,1); CGContextAddLineToPoint(c,9,17);
-    CGContextMoveToPoint(c,1,9); CGContextAddLineToPoint(c,17,9);
-    CGContextMoveToPoint(c,3,3); CGContextAddLineToPoint(c,15,15);
-    CGContextMoveToPoint(c,15,3); CGContextAddLineToPoint(c,3,15);
-    CGContextStrokePath(c);
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return image;
-}
-- (void)updateForClock {
-    BOOL enabled = NOVAEnabled();
-    NSInteger hour = [[NSCalendar currentCalendar] component:NSCalendarUnitHour fromDate:[NSDate date]];
-    BOOL daylight = (hour >= 7 && hour < 14);
-    [CATransaction begin];
-    [CATransaction setAnimationDuration:1.0];
-    self.sunLayer.opacity = (enabled && daylight && NOVASunEnabled()) ? 1.0 : 0.0;
-    self.snowLayer.birthRate = (enabled && !daylight && NOVASnowEnabled()) ? 1.0 : 0.0;
-    [CATransaction commit];
-}
 - (void)layoutSubviews {
     [super layoutSubviews];
-    self.sunLayer.frame = self.bounds;
-    self.snowLayer.frame = self.bounds;
-    // Emit across and slightly beyond the entire screen width so flakes
-    // are already entering from both edges instead of clustering in center.
-    self.snowLayer.emitterPosition = CGPointMake(CGRectGetMidX(self.bounds), 0);
-    self.snowLayer.emitterSize = CGSizeMake(self.bounds.size.width * 1.12, 1);
-    self.snowLayer.renderMode = kCAEmitterLayerOldestFirst;
-    self.snowLayer.birthRate = 1.0;
-    self.snowLayer.emitterShape = kCAEmitterLayerLine;
-    self.snowLayer.emitterMode = kCAEmitterLayerSurface;
+    self.sun.frame = self.bounds;
+    NSArray *layers = @[self.snow,self.rain,self.leaves];
+    for (CAEmitterLayer *layer in layers) {
+        layer.frame = self.bounds;
+        layer.emitterPosition = CGPointMake(CGRectGetMidX(self.bounds), -2);
+        layer.emitterSize = CGSizeMake(MAX(1,self.bounds.size.width * 1.18), 1);
+    }
+}
+- (void)refresh {
+    BOOL enabled = NOVAOn();
+    NSInteger hour = [[NSCalendar currentCalendar] component:NSCalendarUnitHour fromDate:[NSDate date]];
+    BOOL day = hour >= 7 && hour < 14;
+    [CATransaction begin]; [CATransaction setAnimationDuration:1.4];
+    self.sun.opacity = (enabled && day && NOVAGet(kSun)) ? 1 : 0;
+    self.snow.birthRate = (enabled && !day && NOVAGet(kSnow)) ? 1 : 0;
+    self.rain.birthRate = (enabled && NOVAGet(kRain)) ? 1 : 0;
+    self.leaves.birthRate = (enabled && NOVAGet(kLeaves)) ? 1 : 0;
+    [CATransaction commit];
+    if (enabled && (NOVAGet(kSnow) || NOVAGet(kRain) || NOVAGet(kLeaves))) [self startMotion];
+    else [self stopMotion];
+}
+- (void)startMotion {
+    if (self.motionActive || !self.window || !self.motion.accelerometerAvailable) return;
+    self.motionActive = YES;
+    __weak typeof(self) weakSelf = self;
+    [self.motion startAccelerometerUpdatesToQueue:[NSOperationQueue mainQueue]
+        withHandler:^(CMAccelerometerData *data, NSError *error) {
+            __strong typeof(weakSelf) self = weakSelf;
+            if (!self || error || !self.motionActive) return;
+            double x = data.acceleration.x, y = data.acceleration.y;
+            CGFloat dx = (CGFloat)MAX(-65, MIN(65, x * 95));
+            CGFloat dy = (CGFloat)MAX(-30, MIN(30, -y * 35));
+            for (CAEmitterLayer *layer in @[self.snow,self.rain,self.leaves]) {
+                for (CAEmitterCell *cell in layer.emitterCells) {
+                    cell.xAcceleration = 5 + dx;
+                    cell.yAcceleration = 10 + dy;
+                }
+                layer.emitterPosition = CGPointMake(CGRectGetMidX(self.bounds) + dx * .35, -2 + dy * .15);
+            }
+        }];
+}
+- (void)stopMotion {
+    if (!self.motionActive) return;
+    self.motionActive = NO;
+    [self.motion stopAccelerometerUpdates];
+}
+- (void)appActive { [self refresh]; }
+- (void)appInactive { [self stopMotion]; }
+- (void)didMoveToWindow {
+    [super didMoveToWindow];
+    if (self.window) [self refresh]; else [self stopMotion];
 }
 - (void)dealloc {
-    [self.clockTimer invalidate];
+    [self stopMotion];
     CFNotificationCenterRemoveObserver(CFNotificationCenterGetDarwinNotifyCenter(),
-        (__bridge const void *)self, kNOVAPrefsChanged, NULL);
+        (__bridge const void *)self, kChanged, NULL);
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 @end
 
-@interface NOVAGlassPanel : UIView
-@end
+@interface NOVAGlassPanel : UIView @end
 @implementation NOVAGlassPanel
 - (instancetype)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {
         self.userInteractionEnabled = NO;
         self.backgroundColor = [UIColor colorWithWhite:1 alpha:.035];
         self.layer.borderColor = [UIColor colorWithWhite:1 alpha:.16].CGColor;
-        self.layer.borderWidth = 1.0;
-        self.layer.cornerRadius = 18;
-        self.layer.masksToBounds = YES;
+        self.layer.borderWidth = 1; self.layer.cornerRadius = 18; self.layer.masksToBounds = YES;
     }
     return self;
 }
 @end
 
-static void NOVAInstallOverlayBehindContent(UIView *host, NSInteger tag, BOOL weather) {
+static void NOVAInstall(UIView *host, NSInteger tag, BOOL weather) {
     if (!host) return;
-    UIView *existing = [host viewWithTag:tag];
-    if (existing) {
-        existing.frame = host.bounds;
-        return;
-    }
-    UIView *overlay = weather ? (UIView *)[[NOVAGlassOverlay alloc] initWithFrame:host.bounds]
-                              : (UIView *)[[NOVAGlassPanel alloc] initWithFrame:host.bounds];
-    overlay.tag = tag;
-    overlay.userInteractionEnabled = NO;
-    overlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    [host insertSubview:overlay atIndex:0];
+    UIView *old = [host viewWithTag:tag];
+    if (old) { old.frame = host.bounds; return; }
+    UIView *view = weather ? (UIView *)[[NOVAGlassOverlay alloc] initWithFrame:host.bounds]
+                           : (UIView *)[[NOVAGlassPanel alloc] initWithFrame:host.bounds];
+    view.tag = tag; view.userInteractionEnabled = NO;
+    view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [host insertSubview:view atIndex:0];
 }
 
 %group NOVAIconGlass
@@ -194,25 +210,19 @@ static void NOVAInstallOverlayBehindContent(UIView *host, NSInteger tag, BOOL we
 - (void)layoutSubviews {
     %orig;
     CALayer *glass = nil;
-    for (CALayer *candidate in self.layer.sublayers) {
+    for (CALayer *candidate in self.layer.sublayers)
         if ([candidate.name isEqualToString:@"com.nova.glass.icon-sheen"]) { glass = candidate; break; }
-    }
     if (!glass) {
         CAGradientLayer *sheen = [CAGradientLayer layer];
         sheen.name = @"com.nova.glass.icon-sheen";
-        sheen.colors = @[(id)[UIColor colorWithWhite:1 alpha:.17].CGColor,
+        sheen.colors = @[(id)[UIColor colorWithWhite:1 alpha:.20].CGColor,
                          (id)[UIColor colorWithWhite:1 alpha:.015].CGColor,
-                         (id)[UIColor colorWithWhite:1 alpha:.035].CGColor];
-        sheen.locations = @[@0,@.42,@1];
-        sheen.startPoint = CGPointMake(.1,0);
-        sheen.endPoint = CGPointMake(.9,1);
-        sheen.borderColor = [UIColor colorWithWhite:1 alpha:.30].CGColor;
-        sheen.borderWidth = 1.0;
-        [self.layer addSublayer:sheen];
-        glass = sheen;
+                         (id)[UIColor colorWithRed:.40 green:.70 blue:1 alpha:.08].CGColor];
+        sheen.locations = @[@0,@.48,@1]; sheen.startPoint = CGPointMake(.1,0); sheen.endPoint = CGPointMake(.9,1);
+        sheen.borderColor = [UIColor colorWithWhite:1 alpha:.28].CGColor; sheen.borderWidth = 1;
+        [self.layer addSublayer:sheen]; glass = sheen;
     }
-    glass.frame = self.bounds;
-    glass.cornerRadius = self.layer.cornerRadius > 0 ? self.layer.cornerRadius : 18;
+    glass.frame = self.bounds; glass.cornerRadius = self.layer.cornerRadius > 0 ? self.layer.cornerRadius : 18;
     glass.masksToBounds = YES;
 }
 %end
@@ -220,34 +230,49 @@ static void NOVAInstallOverlayBehindContent(UIView *host, NSInteger tag, BOOL we
 
 %group NOVAHome
 %hook SBIconController
-- (void)viewDidAppear:(BOOL)animated {
-    %orig;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NOVAInstallOverlayBehindContent([(UIViewController *)self view], 0x4E4F5641, YES);
-    });
-}
-- (void)viewDidLayoutSubviews {
-    %orig;
-    NOVAInstallOverlayBehindContent([(UIViewController *)self view], 0x4E4F5641, YES);
-}
+- (void)viewDidAppear:(BOOL)animated { %orig; dispatch_async(dispatch_get_main_queue(), ^{ NOVAInstall(self.view, 0x4E4F5641, YES); }); }
+- (void)viewDidLayoutSubviews { %orig; NOVAInstall(self.view, 0x4E4F5641, YES); }
 %end
 %end
 
 %group NOVALockScreen
 %hook CSCoverSheetViewController
-- (void)viewDidAppear:(BOOL)animated {
-    %orig;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NOVAInstallOverlayBehindContent([(UIViewController *)self view], 0x4E4F5642, NO);
-    });
-}
+- (void)viewDidAppear:(BOOL)animated { %orig; dispatch_async(dispatch_get_main_queue(), ^{ NOVAInstall(self.view, 0x4E4F5642, YES); }); }
+- (void)viewDidLayoutSubviews { %orig; NOVAInstall(self.view, 0x4E4F5642, YES); }
 %end
 %end
 
+static void NOVAStyleMessages(void) {
+    if (![NSBundle.mainBundle.bundleIdentifier isEqualToString:@"com.apple.MobileSMS"]) return;
+    UIColor *blue = [UIColor colorWithRed:.12 green:.48 blue:.96 alpha:1];
+    UIColor *glass = [UIColor colorWithWhite:1 alpha:.76];
+    UINavigationBar *nav = [UINavigationBar appearance];
+    nav.translucent = YES; nav.barTintColor = glass; nav.tintColor = blue;
+    nav.titleTextAttributes = @{NSForegroundColorAttributeName:[UIColor colorWithWhite:.10 alpha:1],
+                                NSFontAttributeName:[UIFont systemFontOfSize:17 weight:UIFontWeightSemibold]};
+    if ([nav respondsToSelector:@selector(setShadowImage:)]) nav.shadowImage = [UIImage new];
+    UIToolbar *toolbar = [UIToolbar appearance];
+    toolbar.translucent = YES; toolbar.barTintColor = glass; toolbar.tintColor = blue;
+    UITableView *table = [UITableView appearance];
+    table.backgroundColor = [UIColor colorWithWhite:.97 alpha:.96];
+    UITableViewCell *cell = [UITableViewCell appearance];
+    cell.tintColor = blue;
+    UITextField *field = [UITextField appearance];
+    field.tintColor = blue;
+    UITextView *textView = [UITextView appearance];
+    textView.tintColor = blue;
+}
+
 %ctor {
     @autoreleasepool {
-        if (objc_getClass("SBIconController")) %init(NOVAHome);
-        if (objc_getClass("CSCoverSheetViewController")) %init(NOVALockScreen);
-        if (objc_getClass("SBIconImageView")) %init(NOVAIconGlass);
+        NSString *bundle = NSBundle.mainBundle.bundleIdentifier;
+        if ([bundle isEqualToString:@"com.apple.MobileSMS"]) {
+            dispatch_async(dispatch_get_main_queue(), ^{ NOVAStyleMessages(); });
+        }
+        if ([bundle isEqualToString:@"com.apple.springboard"]) {
+            if (objc_getClass("SBIconController")) %init(NOVAHome);
+            if (objc_getClass("CSCoverSheetViewController")) %init(NOVALockScreen);
+            if (objc_getClass("SBIconImageView")) %init(NOVAIconGlass);
+        }
     }
 }
