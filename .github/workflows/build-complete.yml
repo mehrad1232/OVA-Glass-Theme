@@ -1,12 +1,10 @@
-name: Build NOVA Glass Complete iOS 12 Package
+name: Build NOVA Glass for Messages (iOS 12)
 
 on:
   push:
     branches: [main]
     paths:
       - "NOVAWeather/**"
-      - "NOVA Glass.theme/**"
-      - "tools/**"
       - ".github/workflows/build-complete.yml"
   workflow_dispatch:
 
@@ -14,59 +12,37 @@ permissions:
   contents: read
 
 jobs:
-  build-complete:
-    runs-on: macos-15-intel
+  messages-only:
+    runs-on: macos-15
     steps:
-      - name: Checkout source
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install build tools
-        run: |
-          brew install ldid dpkg ffmpeg
-          python3 -m venv .venv
-          .venv/bin/python -m pip install --disable-pip-version-check --upgrade pip Pillow numpy
-
-      - name: Generate SnowBoard theme and wallpapers
-        run: |
-          .venv/bin/python tools/build_theme.py
-          .venv/bin/python tools/build_complete_artwork.py
-          .venv/bin/python - <<'PY'
-          from pathlib import Path
-          import plistlib
-          from PIL import Image
-          root=Path("NOVA Glass.theme")
-          with (root/"Info.plist").open("rb") as f: info=plistlib.load(f)
-          icons=list((root/"IconBundles").glob("*.png"))
-          settings=list((root/"Bundles"/"com.apple.preferences-framework").glob("*.png"))
-          walls=list((root/"Wallpapers").glob("*.png"))
-          assert info.get("ThemeType")=="Icons" and info.get("PackageName")=="NOVA Glass"
-          assert len(icons)>=70, f"Need at least 70 icon bundles, got {len(icons)}"
-          assert len(settings)>=30, f"Need 2x/3x Settings icons, got {len(settings)}"
-          assert len(walls)==6, f"Need six wallpapers, got {len(walls)}"
-          for p in icons:
-              with Image.open(p) as im: assert im.size==(120,120), p
-          print(f"PASS: {len(icons)} app icons, {len(settings)} Settings assets, {len(walls)} wallpapers.")
-          PY
-
-      - name: Generate original NOVA ringtone
-        run: |
-          .venv/bin/python tools/generate_ringtone.py
-          ffmpeg -hide_banner -loglevel error -y -i dist/NOVA-Glass-Ringtone.wav -t 24 -c:a aac -b:a 192k -f ipod dist/NOVA-Glass-Ringtone.m4r
-          test -s dist/NOVA-Glass-Ringtone.m4r
+      - name: Install package tools
+        run: brew install ldid dpkg
 
       - name: Install Theos
         run: |
           git clone --recursive --depth 1 https://github.com/theos/theos.git "$GITHUB_WORKSPACE/theos"
           echo "THEOS=$GITHUB_WORKSPACE/theos" >> "$GITHUB_ENV"
 
-      - name: Stage all installable assets into the Debian package
+      - name: Validate Messages-only injection
+        working-directory: NOVAWeather
         run: |
-          mkdir -p "NOVAWeather/layout/Library/Ringtones"
-          mkdir -p "NOVAWeather/layout/Library/Themes"
-          cp dist/NOVA-Glass-Ringtone.m4r "NOVAWeather/layout/Library/Ringtones/NOVA Glass.m4r"
-          cp -R "NOVA Glass.theme" "NOVAWeather/layout/Library/Themes/NOVA Glass.theme"
+          plutil -lint NOVAWeather.plist
+          python3 - <<'PY'
+          import plistlib
+          with open("NOVAWeather.plist", "rb") as f:
+              data = plistlib.load(f)
+          bundles = data["Filter"]["Bundles"]
+          assert bundles == ["com.apple.MobileSMS"], bundles
+          source = open("Tweak.xm", encoding="utf-8").read()
+          assert "com.apple.MobileSMS" in source
+          assert "SpringBoard" not in source
+          print("PASS: tweak is injected only into Apple Messages.")
+          PY
 
-      - name: Compile rootful iOS 12 tweak
+      - name: Compile and package arm64 rootful iOS 12 tweak
         working-directory: NOVAWeather
         run: |
           export THEOS="$GITHUB_WORKSPACE/theos"
@@ -75,50 +51,37 @@ jobs:
           DEB="$(find packages -maxdepth 1 -name '*.deb' -print -quit)"
           test -n "$DEB"
           test "$(dpkg-deb -f "$DEB" Package)" = "com.nova.glass.weather"
-          test "$(dpkg-deb -f "$DEB" Version)" = "1.0.3"
+          test "$(dpkg-deb -f "$DEB" Version)" = "2.0.0"
           dpkg-deb -c "$DEB" | grep -F "Library/PreferenceBundles/NOVAWeatherPrefs.bundle/"
-          dpkg-deb -c "$DEB" | grep -F "Library/Ringtones/NOVA Glass.m4r"
-          dpkg-deb -c "$DEB" | grep -F "Library/Themes/NOVA Glass.theme/"
+          dpkg-deb -c "$DEB" | grep -F "Library/MobileSubstrate/DynamicLibraries/NOVAWeather.dylib"
+          mkdir -p ../dist/NOVA-Glass-Messages-iOS12
+          cp "$DEB" ../dist/NOVA-Glass-Messages-iOS12/
+          cp README.md ../dist/NOVA-Glass-Messages-iOS12/
+          cat > ../dist/NOVA-Glass-Messages-iOS12/INSTALL.txt <<'EOF'
+          NOVA GLASS FOR MESSAGES 2.0.0
+          Target: iPhone 5s / iOS 12.5.8 / rootful jailbreak (Amethyst)
 
-      - name: Assemble one complete install bundle
-        run: |
-          mkdir -p dist/NOVA-Glass-Full
-          cp -R "NOVA Glass.theme" dist/NOVA-Glass-Full/
-          mkdir -p dist/NOVA-Glass-Full/Packages
-          cp NOVAWeather/packages/*.deb dist/NOVA-Glass-Full/Packages/
-          cp dist/NOVA-Glass-Ringtone.m4r dist/NOVA-Glass-Full/
-          cp NOVAWeather/README.md dist/NOVA-Glass-Full/
-          cat > dist/NOVA-Glass-Full/INSTALL.txt <<'EOF'
-          NOVA GLASS 1.0.3 — iPhone 5s / iOS 12.5.8 / rootful jailbreak
+          Install the .deb with Sileo. Then force-close and reopen Messages.
+          Configure the switches in Settings > NOVA Messages.
+          The tweak injects only into com.apple.MobileSMS; it does not modify
+          SpringBoard, the Home Screen, Lock Screen, or other apps.
 
-          1. Back up your device before installing.
-          2. Install the single .deb in Packages/ using Sileo.
-          3. Enable NOVA Glass in SnowBoard and respring if needed.
-          4. Open Settings > NOVA Glass to enable snowfall, rain and leaves.
-          5. Force-close and reopen Messages to apply blue/white translucent styling.
-          6. Select NOVA Glass in Settings > Sounds if iOS registers the ringtone.
-
-          Weather: sunlight 07:00–13:59; snow at other hours when enabled.
-          Rain and leaves have separate switches. CoreMotion runs only while
-          the weather overlay is visible. Messages uses UIKit appearance styling;
-          this does not port iOS 27 frameworks or Apple Intelligence.
-
-          This tweak uses private SpringBoard classes. A successful compile
-          does not guarantee runtime safety on every iOS 12 build. Keep a
-          jailbreak recovery method available. If SpringBoard boot-loops,
-          remove com.nova.glass.weather from Sileo/SSH.
+          This is an iOS 12-compatible visual approximation of Liquid Glass.
+          Some internal Messages view classes are private and can vary by iOS
+          build. Compilation/package checks do not replace on-device testing.
+          To disable: turn off NOVA Messages in Settings or uninstall the
+          package from Sileo. Keep a jailbreak recovery method available.
           EOF
-          cd dist
-          zip -r -0 NOVA-Glass-Full-iOS12.zip NOVA-Glass-Full
-          shasum -a 256 NOVA-Glass-Full-iOS12.zip > NOVA-Glass-Full-iOS12.sha256
-          test -s NOVA-Glass-Full-iOS12.zip
+          cd ../dist
+          zip -r NOVA-Glass-Messages-iOS12.zip NOVA-Glass-Messages-iOS12
+          shasum -a 256 NOVA-Glass-Messages-iOS12.zip > NOVA-Glass-Messages-iOS12.sha256
 
-      - name: Upload complete package
+      - name: Upload Messages-only package
         uses: actions/upload-artifact@v4
         with:
-          name: NOVA-Glass-Full-iOS12
+          name: NOVA-Glass-Messages-iOS12
           path: |
-            dist/NOVA-Glass-Full-iOS12.zip
-            dist/NOVA-Glass-Full-iOS12.sha256
+            dist/NOVA-Glass-Messages-iOS12.zip
+            dist/NOVA-Glass-Messages-iOS12.sha256
           if-no-files-found: error
           retention-days: 30
