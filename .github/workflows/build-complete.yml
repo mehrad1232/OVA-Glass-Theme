@@ -75,7 +75,7 @@ jobs:
           DEB="$(find packages -maxdepth 1 -name '*.deb' -print -quit)"
           test -n "$DEB"
           test "$(dpkg-deb -f "$DEB" Package)" = "com.nova.glass.weather"
-          test "$(dpkg-deb -f "$DEB" Version)" = "1.0.2"
+          test "$(dpkg-deb -f "$DEB" Version)" = "1.0.3"
           dpkg-deb -c "$DEB" | grep -F "Library/PreferenceBundles/NOVAWeatherPrefs.bundle/"
           dpkg-deb -c "$DEB" | grep -F "Library/Ringtones/NOVA Glass.m4r"
           dpkg-deb -c "$DEB" | grep -F "Library/Themes/NOVA Glass.theme/"
@@ -89,16 +89,24 @@ jobs:
           cp dist/NOVA-Glass-Ringtone.m4r dist/NOVA-Glass-Full/
           cp NOVAWeather/README.md dist/NOVA-Glass-Full/
           cat > dist/NOVA-Glass-Full/INSTALL.txt <<'EOF'
-          NOVA GLASS — iPhone 5s / iOS 12.5.8 / rootful jailbreak
+          NOVA GLASS 1.0.3 — iPhone 5s / iOS 12.5.8 / rootful jailbreak
 
           1. Back up your device before installing.
-          2. Install the single .deb in Packages/ using Sileo. It includes the theme, tweak, preference pane and ringtone.
+          2. Install the single .deb in Packages/ using Sileo.
           3. Enable NOVA Glass in SnowBoard and respring if needed.
-          4. Select NOVA Glass in Settings > Sounds if iOS has registered the ringtone.
+          4. Open Settings > NOVA Glass to enable snowfall, rain and leaves.
+          5. Force-close and reopen Messages to apply blue/white translucent styling.
+          6. Select NOVA Glass in Settings > Sounds if iOS registers the ringtone.
 
-          The tweak uses private SpringBoard classes. Compilation is not proof of runtime safety.
-          If SpringBoard enters a respring loop, remove com.nova.glass.weather from Sileo/SSH.
-          The weather overlay is time-based: sunlight 07:00–13:59, snow 14:00–06:59.
+          Weather: sunlight 07:00–13:59; snow at other hours when enabled.
+          Rain and leaves have separate switches. CoreMotion runs only while
+          the weather overlay is visible. Messages uses UIKit appearance styling;
+          this does not port iOS 27 frameworks or Apple Intelligence.
+
+          This tweak uses private SpringBoard classes. A successful compile
+          does not guarantee runtime safety on every iOS 12 build. Keep a
+          jailbreak recovery method available. If SpringBoard boot-loops,
+          remove com.nova.glass.weather from Sileo/SSH.
           EOF
           cd dist
           zip -r -0 NOVA-Glass-Full-iOS12.zip NOVA-Glass-Full
