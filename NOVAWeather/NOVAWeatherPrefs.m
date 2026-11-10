@@ -3,76 +3,62 @@
 #import <Preferences/PSSpecifier.h>
 #import <CoreFoundation/CoreFoundation.h>
 
-static NSString * const kNOVAPrefsSuite = @"com.nova.glass.weather";
-static NSString * const kNOVAEnabledKey = @"com.nova.glass.enabled";
-static NSString * const kNOVASunEnabledKey = @"com.nova.glass.sun.enabled";
-static NSString * const kNOVASnowEnabledKey = @"com.nova.glass.snow.enabled";
-static CFStringRef const kNOVAPrefsChanged = CFSTR("com.nova.glass/preferences-changed");
+static NSString * const kSuite = @"com.nova.glass.weather";
+static CFStringRef const kChanged = CFSTR("com.nova.glass/preferences-changed");
 
-@interface NOVAWeatherPrefsController : PSListController
-@end
-
+@interface NOVAWeatherPrefsController : PSListController @end
 @implementation NOVAWeatherPrefsController
-
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = @"NOVA Glass";
-    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:kNOVAPrefsSuite];
-    NSDictionary *defaults = @{
-        kNOVAEnabledKey: @YES,
-        kNOVASunEnabledKey: @YES,
-        kNOVASnowEnabledKey: @YES
-    };
-    [prefs registerDefaults:defaults];
+    NSUserDefaults *p = [[NSUserDefaults alloc] initWithSuiteName:kSuite];
+    [p registerDefaults:@{
+        @"com.nova.glass.enabled":@YES,
+        @"com.nova.glass.sun.enabled":@YES,
+        @"com.nova.glass.snow.enabled":@YES,
+        @"com.nova.glass.rain.enabled":@NO,
+        @"com.nova.glass.leaves.enabled":@NO
+    }];
 }
-
 - (NSArray *)specifiers {
     if (!_specifiers) {
         NSMutableArray *items = [NSMutableArray array];
         [items addObject:[PSSpecifier preferenceSpecifierNamed:@"NOVA GLASS"
             target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil]];
-
-        PSSpecifier *(^switchSpecifier)(NSString *, NSString *) = ^PSSpecifier *(NSString *title, NSString *key) {
-            PSSpecifier *specifier = [PSSpecifier preferenceSpecifierNamed:title
-                target:self set:@selector(setPreferenceValue:specifier:)
-                get:@selector(readPreferenceValue:)
+        PSSpecifier *(^sw)(NSString *,NSString *,NSNumber *) = ^PSSpecifier *(NSString *title, NSString *key, NSNumber *value) {
+            PSSpecifier *s = [PSSpecifier preferenceSpecifierNamed:title target:self
+                set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:)
                 detail:nil cell:PSSwitchCell edit:nil];
-            [specifier setProperty:key forKey:@"key"];
-            [specifier setProperty:@YES forKey:@"default"];
-            [specifier setProperty:@YES forKey:@"enabled"];
-            return specifier;
+            [s setProperty:key forKey:@"key"]; [s setProperty:value forKey:@"default"];
+            return s;
         };
-
-        [items addObject:switchSpecifier(@"Enable NOVA effects", kNOVAEnabledKey)];
-        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"WEATHER"
+        [items addObject:sw(@"Enable NOVA effects",@"com.nova.glass.enabled",@YES)];
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"WEATHER & NATURE"
             target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil]];
-        [items addObject:switchSpecifier(@"Daylight glow (07:00–13:59)", kNOVASunEnabledKey)];
-        [items addObject:switchSpecifier(@"Night snowfall (14:00–06:59)", kNOVASnowEnabledKey)];
-        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"Changes apply immediately"
+        [items addObject:sw(@"Daylight glow (07:00–13:59)",@"com.nova.glass.sun.enabled",@YES)];
+        [items addObject:sw(@"Night snowfall",@"com.nova.glass.snow.enabled",@YES)];
+        [items addObject:sw(@"Rainfall",@"com.nova.glass.rain.enabled",@NO)];
+        [items addObject:sw(@"Falling autumn leaves",@"com.nova.glass.leaves.enabled",@NO)];
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"Motion response uses the accelerometer"
+            target:nil set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil]];
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"MESSAGES"
+            target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil]];
+        [items addObject:[PSSpecifier preferenceSpecifierNamed:@"Modern blue and white glass styling"
             target:nil set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil]];
         _specifiers = [items copy];
     }
     return _specifiers;
 }
-
-- (id)readPreferenceValue:(PSSpecifier *)specifier {
-    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:kNOVAPrefsSuite];
-    NSString *key = [specifier propertyForKey:@"key"];
-    id value = [prefs objectForKey:key];
-    if (!value) value = [specifier propertyForKey:@"default"];
-    return value ?: @YES;
+- (id)readPreferenceValue:(PSSpecifier *)s {
+    NSUserDefaults *p = [[NSUserDefaults alloc] initWithSuiteName:kSuite];
+    id v = [p objectForKey:[s propertyForKey:@"key"]];
+    return v ?: [s propertyForKey:@"default"] ?: @NO;
 }
-
-- (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
-    NSString *key = [specifier propertyForKey:@"key"];
-    if (key.length == 0) return;
-    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:kNOVAPrefsSuite];
-    [prefs setBool:[value boolValue] forKey:key];
-    BOOL saved = [prefs synchronize];
-    if (!saved) NSLog(@"[NOVA Glass] Preference sync returned NO for %@", key);
-    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(),
-        kNOVAPrefsChanged, NULL, NULL, true);
-    [self reloadSpecifier:specifier];
+- (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)s {
+    NSString *key = [s propertyForKey:@"key"];
+    if (!key.length) return;
+    NSUserDefaults *p = [[NSUserDefaults alloc] initWithSuiteName:kSuite];
+    [p setBool:[value boolValue] forKey:key]; [p synchronize];
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(),kChanged,NULL,NULL,true);
 }
-
 @end
