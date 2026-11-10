@@ -13,7 +13,6 @@ static NSString * const kSun = @"com.nova.glass.sun.enabled";
 static NSString * const kSnow = @"com.nova.glass.snow.enabled";
 static NSString * const kRain = @"com.nova.glass.rain.enabled";
 static NSString * const kLeaves = @"com.nova.glass.leaves.enabled";
-static NSString * const kRain = @"com.nova.glass.rain.enabled";
 static CFStringRef const kChanged = CFSTR("com.nova.glass/preferences-changed");
 static BOOL NOVAGet(NSString *key) {
     NSUserDefaults *p = [[NSUserDefaults alloc] initWithSuiteName:kSuite];
