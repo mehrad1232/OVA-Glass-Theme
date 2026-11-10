@@ -1,15 +1,14 @@
 ARCHS = arm64
 TARGET = iphone:clang:latest:12.0
-INSTALL_TARGET_PROCESSES = SpringBoard, MobileSMS
+INSTALL_TARGET_PROCESSES = MobileSMS
 
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = NOVAWeather
 NOVAWeather_FILES = Tweak.xm
 NOVAWeather_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
-NOVAWeather_FRAMEWORKS = UIKit QuartzCore CoreMotion
+NOVAWeather_FRAMEWORKS = UIKit QuartzCore
 NOVAWeather_PLIST = NOVAWeather.plist
-NOVAWeather_LDFLAGS += -Wl,-segalign,4000
 
 BUNDLE_NAME = NOVAWeatherPrefs
 NOVAWeatherPrefs_FILES = NOVAWeatherPrefs.m
