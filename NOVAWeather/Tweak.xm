@@ -184,21 +184,6 @@ static void NOVAStyle(UIView *view) {
         if (NOVAMessages()) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 %init(NOVAMessagesOnly);
-                UINavigationBar *nav = [UINavigationBar appearance];
-                nav.translucent = YES;
-                nav.barTintColor = [UIColor colorWithWhite:1 alpha:.52];
-                nav.tintColor = [UIColor colorWithRed:.12 green:.48 blue:.96 alpha:1];
-                nav.titleTextAttributes = @{
-                    NSForegroundColorAttributeName:[UIColor colorWithWhite:.08 alpha:1],
-                    NSFontAttributeName:[UIFont systemFontOfSize:17 weight:UIFontWeightSemibold]
-                };
-                nav.shadowImage = [UIImage new];
-                UIToolbar *tool = [UIToolbar appearance];
-                tool.translucent = YES;
-                tool.barTintColor = [UIColor colorWithWhite:1 alpha:.48];
-                tool.tintColor = nav.tintColor;
-                [UITextField appearance].tintColor = nav.tintColor;
-                [UITextView appearance].tintColor = nav.tintColor;
             });
         }
     }
