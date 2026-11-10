@@ -145,7 +145,10 @@ static void NOVAOverlayPreferencesChanged(CFNotificationCenterRef center, void *
     // are already entering from both edges instead of clustering in center.
     self.snowLayer.emitterPosition = CGPointMake(CGRectGetMidX(self.bounds), 0);
     self.snowLayer.emitterSize = CGSizeMake(self.bounds.size.width * 1.12, 1);
-    self.snowLayer.renderMode = kCAEmitterLayerOldestFirst;\n    self.snowLayer.birthRate = 1.0;\n    self.snowLayer.emitterShape = kCAEmitterLayerLine;\n    self.snowLayer.emitterMode = kCAEmitterLayerSurface;
+    self.snowLayer.renderMode = kCAEmitterLayerOldestFirst;
+    self.snowLayer.birthRate = 1.0;
+    self.snowLayer.emitterShape = kCAEmitterLayerLine;
+    self.snowLayer.emitterMode = kCAEmitterLayerSurface;
 }
 - (void)dealloc {
     [self.clockTimer invalidate];
