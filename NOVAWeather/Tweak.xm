@@ -20,7 +20,7 @@ static BOOL NOVAHas(NSString *name, NSArray<NSString *> *tokens) {
     return NO;
 }
 static BOOL NOVAOutgoing(UIView *view) {
-    for (UIView *v = view; v && view != nil; v = v.superview) {
+    for (UIView *v = view; v; v = v.superview) {
         for (NSString *key in @[@"isFromMe", @"isOutgoing", @"isFromCurrentUser"]) {
             SEL s = NSSelectorFromString(key);
             if ([v respondsToSelector:s]) {
@@ -107,7 +107,7 @@ static void NOVASnow(UIView *host) {
     emitter.emitterSize = CGSizeMake(CGRectGetWidth(overlay.bounds), 1);
     CAEmitterCell *flake = [CAEmitterCell emitterCell];
     flake.contents = (__bridge id)NOVASnowImage().CGImage;
-    flake.birthRate = .18; flake.lifetime = 10;
+    flake.birthRate = .65; flake.lifetime = 10;
     flake.velocity = 15; flake.velocityRange = 8; flake.yAcceleration = 5;
     flake.scale = .12; flake.scaleRange = .08; flake.alphaSpeed = -.055;
     emitter.emitterCells = @[flake];
@@ -123,9 +123,9 @@ static void NOVAStyle(UIView *view) {
                         @"CKConversationListLargeTextCell", @"CKStarkConversationListCell",
                         @"CKTranscriptBalloonCell", @"CKConversationListTableView",
                         @"CKTranscriptCollectionView", @"UINavigationBar", @"UIToolbar"])) return;
-    if (!NOVASetting(@"messages.enabled", NO)) return;
+    if (!NOVASetting(@"messages.enabled", YES)) return;
     BOOL ice = NOVASetting(@"messages.iceBlue", YES);
-    if (NOVASetting(@"messages.bubbles", YES) && NOVAHas(name, @[@"BalloonView"])) {
+    if (NOVASetting(@"messages.bubbles", YES) && NOVAHas(name, @[@"CKBalloonView", @"BalloonView", @"CKMessageBalloonView"])) {
         BOOL out = NOVAOutgoing(view);
         UIColor *tint = out
             ? [UIColor colorWithRed:.25 green:.59 blue:1 alpha:.25]
