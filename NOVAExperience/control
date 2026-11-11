@@ -1,0 +1,9 @@
+Package: com.nova.glass.experience
+Name: NOVA Glass System Experience
+Description: Optional iOS 12 glass styling for Lock Screen, Control Center and incoming-call surfaces, with an original NOVA ringtone.
+Maintainer: NOVA
+Author: NOVA
+Section: Tweaks
+Depends: mobilesubstrate, firmware (>= 12.0)
+Architecture: iphoneos-arm
+Version: 1.0.0
