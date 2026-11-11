@@ -22,7 +22,7 @@ jobs:
 
       - name: Install package and artwork tools
         run: |
-          brew install ldid dpkg
+          brew install ldid dpkg ffmpeg
           python3 -m pip install --break-system-packages Pillow numpy
 
       - name: Install Theos
@@ -83,6 +83,30 @@ jobs:
           zip -r NOVA-Glass-Messages-iOS12.zip NOVA-Glass-Messages-iOS12
           shasum -a 256 NOVA-Glass-Messages-iOS12.zip > NOVA-Glass-Messages-iOS12.sha256
 
+      - name: Build optional Lock Screen, Control Center and Phone experience
+        run: |
+          python3 tools/generate_ringtone.py
+          ffmpeg -hide_banner -loglevel error -y -i dist/NOVA-Glass-Ringtone.wav -c:a aac -b:a 192k -t 30 -f ipod dist/NOVA-Glass-Ringtone.m4r
+          mkdir -p NOVAExperience/layout/Library/Ringtones
+          cp dist/NOVA-Glass-Ringtone.m4r "NOVAExperience/layout/Library/Ringtones/NOVA Glass.m4r"
+          cd NOVAExperience
+          export THEOS="$GITHUB_WORKSPACE/theos"
+          make clean
+          make package FINALPACKAGE=1
+          DEB="$(find packages -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$DEB"
+          test "$(dpkg-deb -f "$DEB" Package)" = "com.nova.glass.experience"
+          test "$(dpkg-deb -f "$DEB" Version)" = "1.0.0"
+          test "$(dpkg-deb -f "$DEB" Architecture)" = "iphoneos-arm"
+          dpkg-deb -c "$DEB" | grep -F "Library/MobileSubstrate/DynamicLibraries/NOVAExperience.dylib"
+          dpkg-deb -c "$DEB" | grep -F "Library/Ringtones/NOVA Glass.m4r"
+          mkdir -p ../dist/NOVA-Glass-System-iOS12
+          cp "$DEB" ../dist/NOVA-Glass-System-iOS12/
+          cp README.md ../dist/NOVA-Glass-System-iOS12/
+          cd ../dist
+          zip -r NOVA-Glass-System-iOS12.zip NOVA-Glass-System-iOS12
+          shasum -a 256 NOVA-Glass-System-iOS12.zip > NOVA-Glass-System-iOS12.sha256
+
       - name: Validate seasonal widget
         run: |
           python3 - <<'PY'
@@ -104,7 +128,10 @@ jobs:
           cp -R "NOVA Glass.theme" dist/NOVA-Glass-Complete-iOS12/
           mkdir -p dist/NOVA-Glass-Complete-iOS12/Optional-XenHTML
           cp -R XenHTML/NOVA-Glass-Seasons dist/NOVA-Glass-Complete-iOS12/Optional-XenHTML/
+          cp -R XenHTML/NOVA-LockScreen dist/NOVA-Glass-Complete-iOS12/Optional-XenHTML/
           cp dist/NOVA-Glass-Messages-iOS12/*.deb dist/NOVA-Glass-Complete-iOS12/ 2>/dev/null || true
+          cp dist/NOVA-Glass-System-iOS12/*.deb dist/NOVA-Glass-Complete-iOS12/ 2>/dev/null || true
+          cp dist/NOVA-Glass-Ringtone.m4r dist/NOVA-Glass-Complete-iOS12/
           cat > dist/NOVA-Glass-Complete-iOS12/INSTALL.txt <<'EOF'
           NOVA GLASS COMPLETE EDITION
           Target: iPhone 5s / iOS 12.5.8 / rootful Amethyst + SnowBoard
@@ -114,6 +141,10 @@ jobs:
           The widget supports automatic seasons and manual Spring/Summer/Autumn/Winter selection.
           Xen HTML is optional and is NOT installed by this theme. SnowBoard alone does not run HTML widgets.
           The Messages tweak .deb is separate and only injects into Apple Messages.
+          NOVA Glass System Experience .deb is optional; it styles selected Lock Screen, Control Center and Phone UI surfaces.
+          NOVA-Glass-Ringtone.m4r is an original ringtone; select it in Settings > Sounds.
+          Optional-XenHTML/NOVA-LockScreen is a live clock/date widget; install a compatible Xen HTML release separately.
+          Private iOS 12 UI class matching is best-effort and requires testing on the target iPhone.
           No SpringBoard tweak or Settings layout modification is included in the seasonal widget.
           EOF
           cd dist
@@ -130,5 +161,8 @@ jobs:
             dist/NOVA-Glass-Complete-iOS12.sha256
             dist/NOVA-Glass-Messages-iOS12.zip
             dist/NOVA-Glass-Messages-iOS12.sha256
+            dist/NOVA-Glass-System-iOS12.zip
+            dist/NOVA-Glass-System-iOS12.sha256
+            dist/NOVA-Glass-Ringtone.m4r
           if-no-files-found: error
           retention-days: 30
