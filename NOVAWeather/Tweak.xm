@@ -4,7 +4,7 @@
 #import <objc/message.h>
 
 static NSString * const kSuite = @"com.nova.glass.messages";
-static char kEffectKey, kTintKey, kHighlightKey, kSnowKey;
+static char kEffectKey, kTintKey, kHighlightKey, kSnowKey, kRainKey;
 
 static BOOL NOVASetting(NSString *key, BOOL fallback) {
     NSUserDefaults *p = [[NSUserDefaults alloc] initWithSuiteName:kSuite];
@@ -115,6 +115,47 @@ static void NOVASnow(UIView *host) {
     [host insertSubview:overlay atIndex:0];
     objc_setAssociatedObject(host, &kSnowKey, overlay, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
+
+static UIImage *NOVARainImage(void) {
+    static UIImage *img;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        UIGraphicsBeginImageContextWithOptions(CGSizeMake(3, 16), NO, 0);
+        [[UIColor colorWithRed:.72 green:.88 blue:1 alpha:.82] setFill];
+        [[UIBezierPath bezierPathWithRoundedRect:CGRectMake(1, 0, 1, 14) cornerRadius:.5] fill];
+        img = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+    });
+    return img;
+}
+static void NOVARain(UIView *host) {
+    if (!host || objc_getAssociatedObject(host, &kRainKey) || CGRectIsEmpty(host.bounds)) return;
+    UIView *overlay = [[UIView alloc] initWithFrame:host.bounds];
+    overlay.userInteractionEnabled = NO;
+    overlay.backgroundColor = UIColor.clearColor;
+    overlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    overlay.clipsToBounds = YES;
+    CAEmitterLayer *emitter = [CAEmitterLayer layer];
+    emitter.frame = overlay.bounds;
+    emitter.emitterShape = kCAEmitterLayerLine;
+    emitter.emitterMode = kCAEmitterLayerSurface;
+    emitter.emitterPosition = CGPointMake(CGRectGetMidX(overlay.bounds), -2);
+    emitter.emitterSize = CGSizeMake(CGRectGetWidth(overlay.bounds), 1);
+    CAEmitterCell *drop = [CAEmitterCell emitterCell];
+    drop.contents = (__bridge id)NOVARainImage().CGImage;
+    drop.birthRate = 1.4;
+    drop.lifetime = 2.7;
+    drop.velocity = 225;
+    drop.velocityRange = 42;
+    drop.yAcceleration = 12;
+    drop.scale = .48;
+    drop.alphaSpeed = -.12;
+    emitter.emitterCells = @[drop];
+    [overlay.layer addSublayer:emitter];
+    [host insertSubview:overlay atIndex:MIN((NSUInteger)2, host.subviews.count)];
+    objc_setAssociatedObject(host, &kRainKey, overlay, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
 static void NOVAStyle(UIView *view) {
     if (!view || !NOVAMessages()) return;
     NSString *name = NSStringFromClass(view.class);
@@ -158,6 +199,7 @@ static void NOVAStyle(UIView *view) {
     if (NOVASetting(@"messages.list", YES) && NOVAHas(name, @[@"CKConversationListTableView"])) {
         view.backgroundColor = [UIColor colorWithRed:.92 green:.96 blue:1 alpha:1];
         if (NOVASetting(@"messages.snow", YES)) NOVASnow(view);
+        if (NOVASetting(@"messages.rain", NO)) NOVARain(view);
         return;
     }
     if (NOVAHas(name, @[@"CKTranscriptCollectionView"])) {

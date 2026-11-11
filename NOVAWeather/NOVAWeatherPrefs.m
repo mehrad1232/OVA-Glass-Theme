@@ -34,6 +34,7 @@ static NSString * const kSuite = @"com.nova.glass.messages";
         [items addObject:sw(@"Frosted conversation list", @"messages.list")];
         [items addObject:sw(@"Ice-blue glass tint", @"messages.iceBlue")];
         [items addObject:sw(@"Snowfall (optional)", @"messages.snow")];
+        [items addObject:sw(@"Fine rain (optional)", @"messages.rain")];
         [items addObject:[PSSpecifier preferenceSpecifierNamed:@"Soft pearl and arctic glass. No outlines. Snow is off by default."
             target:nil set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil]];
         _specifiers = [items copy];
