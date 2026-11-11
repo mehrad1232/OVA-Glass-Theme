@@ -41,12 +41,17 @@ jobs:
           assert data["Filter"]["Bundles"] == ["com.apple.MobileSMS"]
           source = open("Tweak.xm", encoding="utf-8").read()
           for token in ["UIVisualEffectView", "UIBlurEffect", "CAEmitterLayer",
-                        "CKMessageEntryView", "BalloonView", "CKConversationListCell"]:
+                        "CKBalloonView", "CKMessageEntryView", "BalloonView",
+                        "CKConversationListCell", "NOVASnow", "NOVARain"]:
               assert token in source, "missing implementation: " + token
           for key in ["messages.enabled", "messages.bubbles", "messages.composer",
                       "messages.list", "messages.snow", "messages.rain", "messages.iceBlue"]:
               assert key in source, "missing preference: " + key
           assert "SpringBoard" not in source
+          prefs = open("NOVAWeatherPrefs.m", encoding="utf-8").read()
+          assert '"messages.enabled":@YES' in prefs
+          assert '"messages.snow":@YES' in prefs
+          assert 'messages.rain' in prefs
           control = open("control", encoding="utf-8").read()
           assert "Version: 3.1.0" in control
           print("PASS: MobileSMS-only filter, glass surfaces, atmosphere and preferences.")
