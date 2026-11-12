@@ -3,9 +3,10 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <math.h>
+#import <substrate.h>
 
 static NSString * const kSuite = @"com.nova.glass.messages";
-static char kEffectKey, kTintKey, kHighlightKey, kAtmosphereKey, kAtmosphereMaskKey;
+static char kEffectKey, kTintKey, kHighlightKey, kAtmosphereKey, kAtmosphereMaskKey, kOriginalLayoutIMPKey;
 
 static BOOL NOVASetting(NSString *key, BOOL fallback) {
     NSUserDefaults *p = [[NSUserDefaults alloc] initWithSuiteName:kSuite];
@@ -307,6 +308,53 @@ static void NOVAStyle(UIView *view) {
     }
 }
 
+
+static void NOVADynamicLayoutSubviews(id self, SEL command) {
+    NSValue *stored = objc_getAssociatedObject(object_getClass(self), &kOriginalLayoutIMPKey);
+    IMP original = (IMP)stored.pointerValue;
+    if (original) ((void (*)(id, SEL))original)(self, command);
+    if ([self isKindOfClass:UIView.class]) NOVAStyle((UIView *)self);
+}
+
+static void NOVAInstallChatKitLayoutHooks(void) {
+    int capacity = objc_getClassList(NULL, 0);
+    if (capacity <= 0) return;
+    Class *classes = (Class *)calloc((size_t)capacity, sizeof(Class));
+    if (!classes) return;
+    int count = objc_getClassList(classes, capacity);
+
+    NSArray *tokens = @[@"BalloonView", @"CKMessageEntryView", @"CKContentEntryView",
+                        @"CKConversationList", @"CKTranscript", @"CKMessageTranscript"];
+    SEL layoutSelector = @selector(layoutSubviews);
+
+    for (int i = 0; i < count; i++) {
+        Class cls = classes[i];
+        if (!cls || ![cls isSubclassOfClass:UIView.class]) continue;
+        if (!NOVAHas(NSStringFromClass(cls), tokens)) continue;
+
+        unsigned int methodCount = 0;
+        Method *methods = class_copyMethodList(cls, &methodCount);
+        BOOL ownsLayout = NO;
+        for (unsigned int j = 0; j < methodCount; j++) {
+            if (method_getName(methods[j]) == layoutSelector) {
+                ownsLayout = YES;
+                break;
+            }
+        }
+        free(methods);
+        if (!ownsLayout) continue;
+
+        IMP original = NULL;
+        MSHookMessageEx(cls, layoutSelector, (IMP)NOVADynamicLayoutSubviews, &original);
+        if (original) {
+            objc_setAssociatedObject((id)cls, &kOriginalLayoutIMPKey,
+                                     [NSValue valueWithPointer:original],
+                                     OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        }
+    }
+    free(classes);
+}
+
 %group NOVAMessagesOnly
 %hook UIView
 - (void)layoutSubviews {
@@ -321,6 +369,7 @@ static void NOVAStyle(UIView *view) {
         if (NOVAMessages()) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 %init(NOVAMessagesOnly);
+                NOVAInstallChatKitLayoutHooks();
             });
         }
     }
