@@ -1,9 +1,9 @@
 Package: com.nova.glass.weather
 Name: NOVA Glass for Messages
-Description: NOVA Glass 3.1 for Apple Messages on rootful arm64 iOS 12: glass ChatKit balloons, composer, frosted conversation list with optional snow and rain atmosphere.
+Description: NOVA Glass 3.2 for rootful arm64 iOS 12: glass ChatKit surfaces plus selectable snow, rain, animated sunlight and falling autumn leaves.
 Maintainer: NOVA
 Author: NOVA
 Section: Tweaks
 Depends: mobilesubstrate, preferenceloader, firmware (>= 12.0)
 Architecture: iphoneos-arm
-Version: 3.1.0
+Version: 3.2.0

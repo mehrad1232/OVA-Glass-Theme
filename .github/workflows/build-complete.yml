@@ -40,21 +40,22 @@ jobs:
               data = plistlib.load(f)
           assert data["Filter"]["Bundles"] == ["com.apple.MobileSMS"]
           source = open("Tweak.xm", encoding="utf-8").read()
+          prefs = open("NOVAWeatherPrefs.m", encoding="utf-8").read()
           for token in ["UIVisualEffectView", "UIBlurEffect", "CAEmitterLayer",
                         "CKBalloonView", "CKMessageEntryView", "BalloonView",
-                        "CKConversationListCell", "NOVASnow", "NOVARain"]:
-              assert token in source, "missing implementation: " + token
+                        "CKConversationListCell", "NOVAEmitter", "NOVASunshine",
+                        "messages.sunshine", "messages.leaves", "NOVARefreshAtmosphere"]:
+              assert token in source or token in prefs, "missing implementation: " + token
           for key in ["messages.enabled", "messages.bubbles", "messages.composer",
-                      "messages.list", "messages.snow", "messages.rain", "messages.iceBlue"]:
-              assert key in source, "missing preference: " + key
+                      "messages.list", "messages.snow", "messages.rain",
+                      "messages.sunshine", "messages.leaves", "messages.iceBlue"]:
+              assert key in source or key in prefs, "missing preference: " + key
           assert "SpringBoard" not in source
-          prefs = open("NOVAWeatherPrefs.m", encoding="utf-8").read()
           assert '"messages.enabled":@YES' in prefs
           assert '"messages.snow":@YES' in prefs
-          assert 'messages.rain' in prefs
           control = open("control", encoding="utf-8").read()
-          assert "Version: 3.1.0" in control
-          print("PASS: MobileSMS-only filter, glass surfaces, atmosphere and preferences.")
+          assert "Version: 3.2.0" in control
+          print("PASS: MobileSMS-only filter, four atmosphere effects, glass surfaces and preferences.")
           PY
 
       - name: Compile and package arm64 rootful iOS 12 tweak
@@ -62,11 +63,12 @@ jobs:
         run: |
           export THEOS="$GITHUB_WORKSPACE/theos"
           make clean
+          rm -f packages/*.deb
           make package FINALPACKAGE=1
           DEB="$(find packages -maxdepth 1 -name '*.deb' -print -quit)"
           test -n "$DEB"
           test "$(dpkg-deb -f "$DEB" Package)" = "com.nova.glass.weather"
-          test "$(dpkg-deb -f "$DEB" Version)" = "3.1.0"
+          test "$(dpkg-deb -f "$DEB" Version)" = "3.2.0"
           test "$(dpkg-deb -f "$DEB" Architecture)" = "iphoneos-arm"
           dpkg-deb -c "$DEB" | grep -F "Library/PreferenceBundles/NOVAWeatherPrefs.bundle/"
           dpkg-deb -c "$DEB" | grep -F "Library/MobileSubstrate/DynamicLibraries/NOVAWeather.dylib"
@@ -74,14 +76,15 @@ jobs:
           cp "$DEB" ../dist/NOVA-Glass-Messages-iOS12/
           cp README.md ../dist/NOVA-Glass-Messages-iOS12/
           cat > ../dist/NOVA-Glass-Messages-iOS12/INSTALL.txt <<'EOF'
-          NOVA GLASS FOR MESSAGES 3.1.0
+          NOVA GLASS FOR MESSAGES 3.2.0
           Target: iPhone 5s / iOS 12.5.8 / rootful jailbreak (Amethyst)
 
           Install the .deb with Sileo. Then force-close and reopen Messages.
           Configure switches in Settings > NOVA Messages.
           The tweak injects only into com.apple.MobileSMS.
-          It uses iOS 12 UIKit blur, glass tint, ChatKit view matching and optional snowfall.
-          ChatKit is private; the exact view hierarchy must be verified on the target device.
+          Enable snowfall, rainfall, sunlight or falling autumn leaves separately.
+          Particles and sunlight are drawn behind transcript/list cells to preserve readability.
+          ChatKit is private; the exact view hierarchy must be verified on the target iPhone.
           To disable, turn off Enable NOVA Glass or uninstall the package from Sileo.
           EOF
           cd ../dist
@@ -145,7 +148,8 @@ jobs:
           Optional-XenHTML/NOVA-Glass-Seasons to /var/mobile/Library/SBHTML/ and enable it.
           The widget supports automatic seasons and manual Spring/Summer/Autumn/Winter selection.
           Xen HTML is optional and is NOT installed by this theme. SnowBoard alone does not run HTML widgets.
-          The Messages tweak .deb is separate and only injects into Apple Messages.
+          The Messages tweak .deb includes selectable snow, rain, sunlight and falling-leaf atmosphere.
+          Open Settings > NOVA Messages to enable the effects you want.
           NOVA Glass System Experience .deb is optional; it styles selected Lock Screen, Control Center and Phone UI surfaces.
           NOVA-Glass-Ringtone.m4r is an original ringtone; select it in Settings > Sounds.
           Optional-XenHTML/NOVA-LockScreen is a live clock/date widget; install a compatible Xen HTML release separately.
