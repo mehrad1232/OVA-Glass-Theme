@@ -1,4 +1,4 @@
-# NOVA Glass for Messages 3.2
+# NOVA Glass for Messages 3.2.1
 
 Weather and glass effects for Apple Messages on rootful arm64 iOS 12, targeting iPhone 5s / iOS 12.5.8.
 
@@ -21,7 +21,7 @@ Weather and glass effects for Apple Messages on rootful arm64 iOS 12, targeting 
 - CAGradientLayer and CABasicAnimation create the sunlight glow and moving rays.
 - The atmosphere overlay is non-interactive and inserted behind scroll content to keep text and buttons readable.
 - The tweak is filtered to com.apple.MobileSMS; it does not inject into SpringBoard or other apps.
-- Runtime matching supports ChatKit conversation-list and transcript scroll-view families.
+- Runtime class enumeration hooks concrete ChatKit layoutSubviews overrides as well as UIView's base layout method.
 
 ## Install
 Build with Theos or download the GitHub Actions artifact. Install the .deb with Sileo, then force-close and reopen Messages. Settings are under Settings > NOVA Messages.
