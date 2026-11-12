@@ -311,7 +311,8 @@ static void NOVAStyle(UIView *view) {
 
 static void NOVADynamicLayoutSubviews(id self, SEL command) {
     NSValue *stored = objc_getAssociatedObject(object_getClass(self), &kOriginalLayoutIMPKey);
-    IMP original = (IMP)stored.pointerValue;
+    IMP original = NULL;
+    if (stored) [stored getValue:&original];
     if (original) ((void (*)(id, SEL))original)(self, command);
     if ([self isKindOfClass:UIView.class]) NOVAStyle((UIView *)self);
 }
@@ -348,7 +349,7 @@ static void NOVAInstallChatKitLayoutHooks(void) {
         MSHookMessageEx(cls, layoutSelector, (IMP)NOVADynamicLayoutSubviews, &original);
         if (original) {
             objc_setAssociatedObject((id)cls, &kOriginalLayoutIMPKey,
-                                     [NSValue valueWithPointer:original],
+                                     [NSValue value:&original withObjCType:@encode(IMP)],
                                      OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
     }

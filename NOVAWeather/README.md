@@ -1,4 +1,4 @@
-# NOVA Glass for Messages 3.2.1
+# NOVA Glass for Messages 3.2.2.2
 
 Weather and glass effects for Apple Messages on rootful arm64 iOS 12, targeting iPhone 5s / iOS 12.5.8.
 

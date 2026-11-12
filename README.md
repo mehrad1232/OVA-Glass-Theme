@@ -4,7 +4,7 @@ A rootful arm64 glass-style customization project for iOS 12.5.8 and Amethyst.
 
 ## Components
 - **SnowBoard theme:** glass-style app icons, iOS 12 Settings glyphs and iPhone 5s wallpapers.
-- **Messages tweak:** ChatKit bubble, composer and conversation-list styling, plus selectable snowfall, rainfall, animated sunlight and falling autumn leaves; runtime hooks ChatKit view overrides and injects only into com.apple.MobileSMS.
+- **Messages tweak:** NOVA Messages 3.2.2 hooks ChatKit layout overrides and provides selectable snow, rain, animated sunlight and falling autumn leaves; injection is restricted to com.apple.MobileSMS.
 - **System Experience tweak:** optional best-effort glass styling for selected Lock Screen, Control Center and Phone call UI surfaces.
 - **Original ringtone:** generated NOVA Glass M4R, packaged into the System Experience DEB and also provided separately.
 - **Lock Screen widget:** optional Xen HTML clock/date widget with subtle frost animation.
