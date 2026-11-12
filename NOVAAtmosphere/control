@@ -1,8 +1,8 @@
 Package: com.nova.glass.atmosphere
-Name: NOVA Glass Atmosphere
-Version: 2.0.0
+Name: NOVA Glass Atmosphere Ultra
+Version: 2.1.0
 Architecture: iphoneos-arm
-Description: Transparent animated snow, rain, warm sunlight and autumn leaves for Home Screen and Lock Screen wallpapers via Xen HTML (iOS 12).
+Description: Ultra transparent Liquid Glass atmosphere with aurora, prism lens, animated snow, fine rain, sunlight and autumn leaves for Xen HTML on iOS 12.
 Maintainer: NOVA
 Author: NOVA
 Section: Tweaks

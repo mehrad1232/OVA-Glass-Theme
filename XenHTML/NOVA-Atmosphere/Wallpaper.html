@@ -4,29 +4,40 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>NOVA Glass Atmosphere</title>
+<meta name="theme-color" content="#080d18">
+<title>NOVA Glass Atmosphere Ultra</title>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:transparent!important;-webkit-user-select:none;user-select:none}
 #nova-atmosphere{position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;overflow:hidden;background:transparent;pointer-events:none;z-index:999999}
 #nova-atmosphere *{pointer-events:none}
 #nova-fx-canvas{position:absolute;top:0;right:0;bottom:0;left:0;display:block;width:100%;height:100%;background:transparent}
-#nova-sun-glow{position:absolute;left:-30vw;top:-30vh;width:105vw;height:105vw;max-width:620px;max-height:620px;border-radius:50%;background:radial-gradient(circle,rgba(255,245,208,.22) 0%,rgba(255,223,159,.13) 24%,rgba(255,208,139,.055) 47%,rgba(255,255,255,0) 72%);filter:blur(9px);opacity:.88;animation:novaSunPulse 13s ease-in-out infinite alternate}
-.nova-sun-ray{position:absolute;left:8%;top:-29%;width:38vw;height:150vh;max-width:230px;background:linear-gradient(180deg,rgba(255,247,218,.16),rgba(255,234,190,.055) 46%,rgba(255,255,255,0) 88%);filter:blur(13px);transform-origin:top center;opacity:.58}
-.nova-sun-ray.ray-a{transform:rotate(19deg);animation:novaRayA 22s ease-in-out infinite alternate}
-.nova-sun-ray.ray-b{left:20%;width:26vw;opacity:.34;transform:rotate(31deg);animation:novaRayB 27s ease-in-out infinite alternate}
-.nova-sun-ray.ray-c{left:-2%;width:22vw;opacity:.25;transform:rotate(9deg);animation:novaRayA 31s ease-in-out infinite alternate-reverse}
-@keyframes novaSunPulse{from{opacity:.52;transform:scale(.92)}to{opacity:.96;transform:scale(1.08)}}
-@keyframes novaRayA{from{margin-left:-4vw;opacity:.22}to{margin-left:9vw;opacity:.62}}
-@keyframes novaRayB{from{margin-left:8vw;opacity:.16}to{margin-left:-3vw;opacity:.42}}
-@media(prefers-reduced-motion:reduce){#nova-sun-glow,.nova-sun-ray{animation:none!important}}
+#nova-sun-glow{position:absolute;left:-34vw;top:-28vh;width:112vw;height:112vw;max-width:560px;max-height:560px;border-radius:50%;background:radial-gradient(circle,rgba(255,250,231,.19) 0%,rgba(211,231,255,.11) 27%,rgba(135,181,255,.055) 48%,rgba(255,255,255,0) 72%);filter:blur(11px);opacity:.92;animation:novaGlow 17s ease-in-out infinite alternate}
+.nova-aurora{position:absolute;left:-35%;top:8%;width:170%;height:34%;border-radius:50%;filter:blur(25px);opacity:.26;transform:rotate(-17deg);background:linear-gradient(90deg,transparent,rgba(122,185,255,.18),rgba(236,246,255,.22),rgba(145,199,255,.14),transparent);animation:novaAurora 28s ease-in-out infinite alternate}
+.nova-aurora.aurora-two{top:19%;left:-42%;height:22%;opacity:.17;transform:rotate(13deg);animation-duration:36s;animation-direction:alternate-reverse}
+.nova-glass-orb{position:absolute;right:-12vw;top:15vh;width:42vw;height:42vw;max-width:190px;max-height:190px;border-radius:50%;border:1px solid rgba(255,255,255,.16);background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.12),rgba(185,220,255,.035) 42%,rgba(255,255,255,0) 72%);box-shadow:inset 1px 1px 0 rgba(255,255,255,.13),inset -9px -12px 24px rgba(115,174,255,.035),0 0 34px rgba(170,211,255,.06);filter:blur(.15px);opacity:.68;animation:novaOrb 24s ease-in-out infinite alternate}
+.nova-glass-orb:before,.nova-glass-orb:after{content:"";position:absolute;inset:9%;border-radius:50%;border:1px solid rgba(255,255,255,.10);transform:rotate(-24deg) scaleX(.72)}
+.nova-glass-orb:after{inset:18%;border-color:rgba(194,224,255,.11);transform:rotate(34deg) scaleX(.82)}
+.nova-edge-light{position:absolute;left:-20%;right:-20%;top:49%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),rgba(188,222,255,.24),rgba(255,255,255,.10),transparent);filter:blur(1px);opacity:.62;transform:rotate(-12deg);animation:novaEdge 19s ease-in-out infinite alternate}
+.nova-bottom-haze{position:absolute;left:-20%;right:-20%;bottom:-15%;height:32%;background:radial-gradient(ellipse at 50% 100%,rgba(174,207,255,.10),rgba(205,229,255,.035) 35%,transparent 72%);filter:blur(12px);opacity:.9}
+.nova-sun-ray{position:absolute;left:7%;top:-28%;width:34vw;height:145vh;max-width:210px;background:linear-gradient(180deg,rgba(255,250,230,.13),rgba(215,234,255,.045) 45%,rgba(255,255,255,0) 88%);filter:blur(15px);transform-origin:top center;opacity:.48}
+.nova-sun-ray.ray-a{transform:rotate(18deg);animation:novaRayA 25s ease-in-out infinite alternate}
+.nova-sun-ray.ray-b{left:18%;width:24vw;opacity:.28;transform:rotate(29deg);animation:novaRayB 31s ease-in-out infinite alternate}
+.nova-sun-ray.ray-c{left:-4%;width:19vw;opacity:.20;transform:rotate(8deg);animation:novaRayA 34s ease-in-out infinite alternate-reverse}
+@keyframes novaGlow{from{opacity:.48;transform:scale(.92)}to{opacity:.94;transform:scale(1.08)}}
+@keyframes novaAurora{from{margin-left:-5vw;opacity:.12}to{margin-left:11vw;opacity:.34}}
+@keyframes novaOrb{from{transform:translate3d(0,0,0) scale(.96)}to{transform:translate3d(-5vw,4vh,0) scale(1.04)}}
+@keyframes novaEdge{from{margin-left:-5vw;opacity:.25}to{margin-left:7vw;opacity:.7}}
+@keyframes novaRayA{from{margin-left:-3vw;opacity:.14}to{margin-left:8vw;opacity:.52}}
+@keyframes novaRayB{from{margin-left:7vw;opacity:.12}to{margin-left:-3vw;opacity:.34}}
+@media(prefers-reduced-motion:reduce){#nova-sun-glow,.nova-sun-ray,.nova-aurora,.nova-glass-orb,.nova-edge-light{animation:none!important}}
 </style>
 </head>
 <body>
 <div id="nova-atmosphere" aria-hidden="true">
   <div id="nova-sun-glow"></div>
-  <div class="nova-sun-ray ray-a"></div>
-  <div class="nova-sun-ray ray-b"></div>
-  <div class="nova-sun-ray ray-c"></div>
+  <div class="nova-aurora"></div><div class="nova-aurora aurora-two"></div>
+  <div class="nova-glass-orb"></div><div class="nova-edge-light"></div><div class="nova-bottom-haze"></div>
+  <div class="nova-sun-ray ray-a"></div><div class="nova-sun-ray ray-b"></div><div class="nova-sun-ray ray-c"></div>
   <canvas id="nova-fx-canvas"></canvas>
 </div>
 <script>
@@ -34,128 +45,49 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:t
 "use strict";
 var canvas=document.getElementById("nova-fx-canvas");
 if(!canvas||!canvas.getContext){return;}
-var ctx=canvas.getContext("2d");
-if(!ctx){return;}
-var width=0,height=0,ratio=1,lastFrame=0,rafId=0;
-var flakes=[],drops=[],leaves=[];
-var TAU=Math.PI*2;
-var random=function(a,b){return a+Math.random()*(b-a);};
+var ctx=canvas.getContext("2d");if(!ctx){return;}
+var width=0,height=0,ratio=1,lastFrame=0,rafId=0,flakes=[],drops=[],leaves=[],glints=[];
+var TAU=Math.PI*2,random=function(a,b){return a+Math.random()*(b-a);};
 function resize(){
-  width=Math.max(1,window.innerWidth||document.documentElement.clientWidth||320);
-  height=Math.max(1,window.innerHeight||document.documentElement.clientHeight||568);
-  ratio=Math.min(1.35,window.devicePixelRatio||1);
-  canvas.width=Math.round(width*ratio);
-  canvas.height=Math.round(height*ratio);
-  canvas.style.width=width+"px";
-  canvas.style.height=height+"px";
-  ctx.setTransform(ratio,0,0,ratio,0,0);
-  var scale=Math.min(1.35,Math.max(.8,Math.sqrt((width*height)/(320*568))));
-  makeSnow(Math.round(24*scale));
-  makeRain(Math.round(18*scale));
-  makeLeaves(Math.round(7*scale));
+ width=Math.max(1,window.innerWidth||document.documentElement.clientWidth||320);
+ height=Math.max(1,window.innerHeight||document.documentElement.clientHeight||568);
+ ratio=Math.min(1.25,window.devicePixelRatio||1);
+ canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);
+ canvas.style.width=width+"px";canvas.style.height=height+"px";ctx.setTransform(ratio,0,0,ratio,0,0);
+ var scale=Math.min(1.2,Math.max(.78,Math.sqrt(width*height/(320*568))));
+ makeSnow(Math.round(27*scale));makeRain(Math.round(13*scale));makeLeaves(Math.round(5*scale));makeGlints(Math.round(12*scale));
 }
-function makeSnow(count){
-  flakes=[];
-  for(var i=0;i<count;i++){
-    flakes.push({x:random(0,width),y:random(-height,height),r:random(.7,2.15),v:random(13,31),s:random(5,17),p:random(0,TAU),a:random(.35,.84)});
-  }
-}
-function makeRain(count){
-  drops=[];
-  for(var i=0;i<count;i++){
-    drops.push({x:random(-20,width+20),y:random(-height,height),len:random(8,17),v:random(205,330),w:random(-24,22),a:random(.16,.46),line:random(.65,1.2)});
-  }
-}
-function makeLeaves(count){
-  leaves=[];
-  for(var i=0;i<count;i++){
-    leaves.push({x:random(-20,width+20),y:random(-height,height),size:random(5.5,10.5),v:random(20,43),wind:random(9,25),phase:random(0,TAU),angle:random(0,TAU),spin:random(-1.5,1.8),hue:random(18,39),alpha:random(.5,.9)});
-  }
-}
-function resetFlake(f){f.x=random(0,width);f.y=-8;f.v=random(13,31);f.r=random(.7,2.15);}
-function resetDrop(d){d.x=random(-12,width+12);d.y=-22;d.v=random(205,330);}
-function resetLeaf(l){l.x=random(-15,width+15);l.y=-24;l.v=random(20,43);l.phase=random(0,TAU);}
+function makeSnow(n){flakes=[];for(var i=0;i<n;i++)flakes.push({x:random(0,width),y:random(-height,height),r:random(.65,2),v:random(11,27),s:random(4,13),p:random(0,TAU),a:random(.28,.72)});}
+function makeRain(n){drops=[];for(var i=0;i<n;i++)drops.push({x:random(-20,width+20),y:random(-height,height),len:random(7,14),v:random(180,285),w:random(-18,16),a:random(.10,.29),line:random(.55,.95)});}
+function makeLeaves(n){leaves=[];for(var i=0;i<n;i++)leaves.push({x:random(-20,width+20),y:random(-height,height),size:random(4,8),v:random(14,30),wind:random(7,18),phase:random(0,TAU),angle:random(0,TAU),spin:random(-1.2,1.4),hue:random(24,39),alpha:random(.28,.62)});}
+function makeGlints(n){glints=[];for(var i=0;i<n;i++)glints.push({x:random(0,width),y:random(0,height),r:random(.45,1.15),p:random(0,TAU),speed:random(.35,.8)});}
+function resetFlake(f){f.x=random(0,width);f.y=-8;f.v=random(11,27);}
+function resetDrop(d){d.x=random(-12,width+12);d.y=-20;d.v=random(180,285);}
+function resetLeaf(l){l.x=random(-15,width+15);l.y=-20;l.v=random(14,30);l.phase=random(0,TAU);}
 function drawSnow(dt,time){
-  ctx.save();
-  for(var i=0;i<flakes.length;i++){
-    var f=flakes[i];
-    f.y+=f.v*dt;
-    f.x+=(Math.sin(time*.0007+f.p)*f.s+5)*dt;
-    if(f.y>height+8||f.x>width+12){resetFlake(f);}
-    ctx.globalAlpha=f.a;
-    ctx.fillStyle="#f5fbff";
-    ctx.shadowColor="rgba(224,244,255,.72)";
-    ctx.shadowBlur=2.5;
-    ctx.beginPath();
-    ctx.arc(f.x,f.y,f.r,0,TAU);
-    ctx.fill();
-  }
-  ctx.restore();
+ ctx.save();ctx.shadowColor="rgba(218,239,255,.55)";ctx.shadowBlur=2;
+ for(var i=0;i<flakes.length;i++){var f=flakes[i];f.y+=f.v*dt;f.x+=(Math.sin(time*.00065+f.p)*f.s+3)*dt;if(f.y>height+8||f.x>width+12)resetFlake(f);ctx.globalAlpha=f.a;ctx.fillStyle="#f5fbff";ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,TAU);ctx.fill();}
+ ctx.restore();
 }
 function drawRain(dt){
-  ctx.save();
-  ctx.lineCap="round";
-  for(var i=0;i<drops.length;i++){
-    var d=drops[i];
-    d.y+=d.v*dt;
-    d.x+=d.w*dt;
-    if(d.y>height+25||d.x>width+25||d.x<-25){resetDrop(d);}
-    ctx.globalAlpha=d.a;
-    ctx.strokeStyle="rgba(190,222,255,.88)";
-    ctx.lineWidth=d.line;
-    ctx.beginPath();
-    ctx.moveTo(d.x,d.y);
-    ctx.lineTo(d.x-2.2,d.y+d.len);
-    ctx.stroke();
-  }
-  ctx.restore();
+ ctx.save();ctx.lineCap="round";
+ for(var i=0;i<drops.length;i++){var d=drops[i];d.y+=d.v*dt;d.x+=d.w*dt;if(d.y>height+20||d.x>width+20||d.x<-20)resetDrop(d);ctx.globalAlpha=d.a;ctx.strokeStyle="rgba(188,220,255,.9)";ctx.lineWidth=d.line;ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(d.x-1.7,d.y+d.len);ctx.stroke();}
+ ctx.restore();
 }
 function drawLeaf(l){
-  var s=l.size;
-  ctx.save();
-  ctx.translate(l.x,l.y);
-  ctx.rotate(l.angle);
-  ctx.scale(s/9,s/9);
-  ctx.beginPath();
-  ctx.moveTo(-9,0);
-  ctx.bezierCurveTo(-5,-8,5,-8,10,0);
-  ctx.bezierCurveTo(5,8,-5,8,-9,0);
-  ctx.closePath();
-  ctx.fillStyle="hsla("+l.hue+",78%,58%,"+l.alpha+")";
-  ctx.fill();
-  ctx.strokeStyle="rgba(104,54,24,.62)";
-  ctx.lineWidth=.7;
-  ctx.beginPath();
-  ctx.moveTo(-8,0);
-  ctx.quadraticCurveTo(0,1,9,0);
-  ctx.stroke();
-  ctx.restore();
+ var s=l.size;ctx.save();ctx.translate(l.x,l.y);ctx.rotate(l.angle);ctx.scale(s/8,s/8);ctx.beginPath();ctx.moveTo(-8,0);ctx.bezierCurveTo(-4,-7,4,-7,9,0);ctx.bezierCurveTo(4,7,-4,7,-8,0);ctx.closePath();ctx.fillStyle="hsla("+l.hue+",66%,67%,"+l.alpha+")";ctx.fill();ctx.strokeStyle="rgba(130,91,55,.48)";ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(-7,0);ctx.quadraticCurveTo(0,1,8,0);ctx.stroke();ctx.restore();
 }
-function drawLeaves(dt,time){
-  for(var i=0;i<leaves.length;i++){
-    var l=leaves[i];
-    l.y+=l.v*dt;
-    l.x+=(Math.sin(time*.001+l.phase)*l.wind+7)*dt;
-    l.angle+=l.spin*dt;
-    if(l.y>height+30||l.x>width+35||l.x<-35){resetLeaf(l);}
-    drawLeaf(l);
-  }
+function drawLeaves(dt,time){for(var i=0;i<leaves.length;i++){var l=leaves[i];l.y+=l.v*dt;l.x+=(Math.sin(time*.0008+l.phase)*l.wind+4)*dt;l.angle+=l.spin*dt;if(l.y>height+24||l.x>width+28||l.x<-28)resetLeaf(l);drawLeaf(l);}}
+function drawGlints(time){
+ ctx.save();for(var i=0;i<glints.length;i++){var g=glints[i],pulse=.25+.45*(.5+.5*Math.sin(time*.001*g.speed+g.p));ctx.globalAlpha=pulse;ctx.fillStyle="#eaf5ff";ctx.shadowColor="rgba(195,225,255,.65)";ctx.shadowBlur=5;ctx.beginPath();ctx.arc(g.x,g.y,g.r,0,TAU);ctx.fill();}ctx.restore();
 }
 function frame(time){
-  rafId=window.requestAnimationFrame(frame);
-  if(document.hidden){lastFrame=time;return;}
-  if(time-lastFrame<32){return;}
-  var dt=lastFrame?Math.min(.05,(time-lastFrame)/1000):.033;
-  lastFrame=time;
-  ctx.clearRect(0,0,width,height);
-  drawSnow(dt,time);
-  drawRain(dt);
-  drawLeaves(dt,time);
+ rafId=window.requestAnimationFrame(frame);if(document.hidden){lastFrame=time;return;}if(time-lastFrame<33)return;
+ var dt=lastFrame?Math.min(.05,(time-lastFrame)/1000):.033;lastFrame=time;
+ ctx.clearRect(0,0,width,height);drawGlints(time);drawSnow(dt,time);drawRain(dt);drawLeaves(dt,time);
 }
-window.addEventListener("resize",resize,false);
-document.addEventListener("visibilitychange",function(){lastFrame=0;},false);
-resize();
-if(!rafId){rafId=window.requestAnimationFrame(frame);}
+window.addEventListener("resize",resize,false);document.addEventListener("visibilitychange",function(){lastFrame=0;},false);
+resize();if(!rafId)rafId=window.requestAnimationFrame(frame);
 })();
 </script>
 </body>

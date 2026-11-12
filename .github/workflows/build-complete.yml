@@ -40,7 +40,7 @@ jobs:
           assert files["Wallpaper.html"].read_bytes() == files["index.html"].read_bytes()
           control = Path("NOVAAtmosphere/control").read_text(encoding="utf-8")
           assert "Package: com.nova.glass.atmosphere" in control
-          assert "Version: 2.0.0" in control
+          assert "Version: 2.1.0" in control
           print("PASS: transparent four-effect widget for Home Screen, Lock Screen and Xen HTML 2.")
           PY
 
@@ -61,25 +61,25 @@ jobs:
           chmod 644 "$STAGE/DEBIAN/control"
           find "$STAGE/var" -type d -exec chmod 755 {} \;
           find "$STAGE/var" -type f -exec chmod 644 {} \;
-          dpkg-deb --root-owner-group --build "$STAGE" "dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb"
-          test "$(dpkg-deb -f dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb Package)" = "com.nova.glass.atmosphere"
-          test "$(dpkg-deb -f dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb Version)" = "2.0.0"
-          test "$(dpkg-deb -f dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb Architecture)" = "iphoneos-arm"
-          dpkg-deb -c dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb
+          dpkg-deb --root-owner-group --build "$STAGE" "dist/com.nova.glass.atmosphere_2.1.0_iphoneos-arm.deb"
+          test "$(dpkg-deb -f dist/com.nova.glass.atmosphere_2.1.0_iphoneos-arm.deb Package)" = "com.nova.glass.atmosphere"
+          test "$(dpkg-deb -f dist/com.nova.glass.atmosphere_2.1.0_iphoneos-arm.deb Version)" = "2.1.0"
+          test "$(dpkg-deb -f dist/com.nova.glass.atmosphere_2.1.0_iphoneos-arm.deb Architecture)" = "iphoneos-arm"
+          dpkg-deb -c dist/com.nova.glass.atmosphere_2.1.0_iphoneos-arm.deb
           cp -R XenHTML/NOVA-Atmosphere dist/NOVA-Glass-Atmosphere-iOS12
           cp NOVAAtmosphere/README.md dist/NOVA-Glass-Atmosphere-iOS12/INSTALL.txt
           cp NOVAAtmosphere/control dist/NOVA-Glass-Atmosphere-iOS12/control
           cd dist
           zip -qr NOVA-Glass-Atmosphere-iOS12.zip NOVA-Glass-Atmosphere-iOS12
-          sha256sum com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb > NOVA-Glass-Atmosphere-iOS12.sha256
-          ls -lh com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb NOVA-Glass-Atmosphere-iOS12.zip
+          sha256sum com.nova.glass.atmosphere_2.1.0_iphoneos-arm.deb > NOVA-Glass-Atmosphere-iOS12.sha256
+          ls -lh com.nova.glass.atmosphere_2.1.0_iphoneos-arm.deb NOVA-Glass-Atmosphere-iOS12.zip
 
       - name: Upload atmosphere package
         uses: actions/upload-artifact@v4
         with:
           name: NOVA-Glass-Atmosphere-iOS12
           path: |
-            dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb
+            dist/com.nova.glass.atmosphere_2.1.0_iphoneos-arm.deb
             dist/NOVA-Glass-Atmosphere-iOS12.zip
             dist/NOVA-Glass-Atmosphere-iOS12.sha256
           if-no-files-found: error
