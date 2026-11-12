@@ -287,7 +287,7 @@ static void NOVAStyle(UIView *view) {
         view.backgroundColor = UIColor.clearColor;
         UIView *content = view;
         if ([view isKindOfClass:UITableViewCell.class]) content = ((UITableViewCell *)view).contentView;
-        else if ([view isKindOfClass:UICollectionViewCell.class) content = ((UICollectionViewCell *)view).contentView;
+        else if ([view isKindOfClass:UICollectionViewCell.class]) content = ((UICollectionViewCell *)view).contentView;
         NOVAGlass(content, UIBlurEffectStyleLight, 14,
                   [UIColor colorWithRed:.94 green:.98 blue:1 alpha:.22], .56);
         return;
