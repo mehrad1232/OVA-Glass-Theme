@@ -22,7 +22,7 @@ jobs:
 
       - name: Install package and artwork tools
         run: |
-          brew install ldid dpkg ffmpeg
+          brew install ldid dpkg
           python3 -m pip install --break-system-packages Pillow numpy
 
       - name: Install Theos
@@ -93,6 +93,7 @@ jobs:
 
       - name: Build optional Lock Screen, Control Center and Phone experience
         run: |
+          brew install ffmpeg
           python3 tools/generate_ringtone.py
           ffmpeg -hide_banner -loglevel error -y -i dist/NOVA-Glass-Ringtone.wav -c:a aac -b:a 192k -t 30 -f ipod dist/NOVA-Glass-Ringtone.m4r
           mkdir -p NOVAExperience/layout/Library/Ringtones
