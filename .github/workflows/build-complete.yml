@@ -43,7 +43,7 @@ jobs:
           prefs = open("NOVAWeatherPrefs.m", encoding="utf-8").read()
           for token in ["UIVisualEffectView", "UIBlurEffect", "CAEmitterLayer",
                         "CKBalloonView", "CKMessageEntryView", "BalloonView",
-                        "CKConversationListCell", "NOVAEmitter", "NOVASunshine",
+                        "CKConversationListCell", "NOVAEmitter", "NOVASunshine", "NOVAInstallChatKitLayoutHooks", "MSHookMessageEx",
                         "messages.sunshine", "messages.leaves", "NOVARefreshAtmosphere"]:
               assert token in source or token in prefs, "missing implementation: " + token
           for key in ["messages.enabled", "messages.bubbles", "messages.composer",
@@ -54,7 +54,7 @@ jobs:
           assert '"messages.enabled":@YES' in prefs
           assert '"messages.snow":@YES' in prefs
           control = open("control", encoding="utf-8").read()
-          assert "Version: 3.2.0" in control
+          assert "Version: 3.2.1" in control
           print("PASS: MobileSMS-only filter, four atmosphere effects, glass surfaces and preferences.")
           PY
 
@@ -68,7 +68,7 @@ jobs:
           DEB="$(find packages -maxdepth 1 -name '*.deb' -print -quit)"
           test -n "$DEB"
           test "$(dpkg-deb -f "$DEB" Package)" = "com.nova.glass.weather"
-          test "$(dpkg-deb -f "$DEB" Version)" = "3.2.0"
+          test "$(dpkg-deb -f "$DEB" Version)" = "3.2.1"
           test "$(dpkg-deb -f "$DEB" Architecture)" = "iphoneos-arm"
           dpkg-deb -c "$DEB" | grep -F "Library/PreferenceBundles/NOVAWeatherPrefs.bundle/"
           dpkg-deb -c "$DEB" | grep -F "Library/MobileSubstrate/DynamicLibraries/NOVAWeather.dylib"
@@ -76,7 +76,7 @@ jobs:
           cp "$DEB" ../dist/NOVA-Glass-Messages-iOS12/
           cp README.md ../dist/NOVA-Glass-Messages-iOS12/
           cat > ../dist/NOVA-Glass-Messages-iOS12/INSTALL.txt <<'EOF'
-          NOVA GLASS FOR MESSAGES 3.2.0
+          NOVA GLASS FOR MESSAGES 3.2.1
           Target: iPhone 5s / iOS 12.5.8 / rootful jailbreak (Amethyst)
 
           Install the .deb with Sileo. Then force-close and reopen Messages.
