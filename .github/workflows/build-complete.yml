@@ -1,12 +1,11 @@
-name: Build NOVA Glass Complete Edition (iOS 12)
+name: Build NOVA Glass Atmosphere for iOS 12
 
 on:
   push:
     branches: [main]
     paths:
-      - "NOVAWeather/**"
-      - "tools/**"
-      - "XenHTML/**"
+      - "XenHTML/NOVA-Atmosphere/**"
+      - "NOVAAtmosphere/**"
       - ".github/workflows/build-complete.yml"
   workflow_dispatch:
 
@@ -14,165 +13,74 @@ permissions:
   contents: read
 
 jobs:
-  messages-only:
-    runs-on: macos-15
+  atmosphere:
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install package and artwork tools
-        run: |
-          brew install ldid dpkg
-          python3 -m pip install --break-system-packages Pillow numpy
-
-      - name: Install Theos
-        run: |
-          git clone --recursive --depth 1 https://github.com/theos/theos.git "$GITHUB_WORKSPACE/theos"
-          echo "THEOS=$GITHUB_WORKSPACE/theos" >> "$GITHUB_ENV"
-
-      - name: Validate Messages-only filter and visual implementation
-        working-directory: NOVAWeather
-        run: |
-          plutil -lint NOVAWeather.plist
-          python3 - <<'PY'
-          import plistlib
-          with open("NOVAWeather.plist", "rb") as f:
-              data = plistlib.load(f)
-          assert data["Filter"]["Bundles"] == ["com.apple.MobileSMS"]
-          source = open("Tweak.xm", encoding="utf-8").read()
-          prefs = open("NOVAWeatherPrefs.m", encoding="utf-8").read()
-          for token in ["UIVisualEffectView", "UIBlurEffect", "CAEmitterLayer",
-                        "CKBalloonView", "CKMessageEntryView", "BalloonView",
-                        "CKConversationListCell", "NOVAEmitter", "NOVASunshine", "NOVAInstallChatKitLayoutHooks", "MSHookMessageEx",
-                        "messages.sunshine", "messages.leaves", "NOVARefreshAtmosphere"]:
-              assert token in source or token in prefs, "missing implementation: " + token
-          for key in ["messages.enabled", "messages.bubbles", "messages.composer",
-                      "messages.list", "messages.snow", "messages.rain",
-                      "messages.sunshine", "messages.leaves", "messages.iceBlue"]:
-              assert key in source or key in prefs, "missing preference: " + key
-          assert "SpringBoard" not in source
-          assert '"messages.enabled":@YES' in prefs
-          assert '"messages.snow":@YES' in prefs
-          control = open("control", encoding="utf-8").read()
-          assert "Version: 3.2.2" in control
-          print("PASS: MobileSMS-only filter, four atmosphere effects, glass surfaces and preferences.")
-          PY
-
-      - name: Compile and package arm64 rootful iOS 12 tweak
-        working-directory: NOVAWeather
-        run: |
-          export THEOS="$GITHUB_WORKSPACE/theos"
-          make clean
-          rm -f packages/*.deb
-          make package FINALPACKAGE=1
-          DEB="$(find packages -maxdepth 1 -name '*.deb' -print -quit)"
-          test -n "$DEB"
-          test "$(dpkg-deb -f "$DEB" Package)" = "com.nova.glass.weather"
-          test "$(dpkg-deb -f "$DEB" Version)" = "3.2.2"
-          test "$(dpkg-deb -f "$DEB" Architecture)" = "iphoneos-arm"
-          dpkg-deb -c "$DEB" | grep -F "Library/PreferenceBundles/NOVAWeatherPrefs.bundle/"
-          dpkg-deb -c "$DEB" | grep -F "Library/MobileSubstrate/DynamicLibraries/NOVAWeather.dylib"
-          mkdir -p ../dist/NOVA-Glass-Messages-iOS12
-          cp "$DEB" ../dist/NOVA-Glass-Messages-iOS12/
-          cp README.md ../dist/NOVA-Glass-Messages-iOS12/
-          cat > ../dist/NOVA-Glass-Messages-iOS12/INSTALL.txt <<'EOF'
-          NOVA GLASS FOR MESSAGES 3.2.2
-          Target: iPhone 5s / iOS 12.5.8 / rootful jailbreak (Amethyst)
-
-          Install the .deb with Sileo. Then force-close and reopen Messages.
-          Configure switches in Settings > NOVA Messages.
-          The tweak injects only into com.apple.MobileSMS.
-          Enable snowfall, rainfall, sunlight or falling autumn leaves separately.
-          Particles and sunlight are drawn behind transcript/list cells to preserve readability.
-          ChatKit is private; the exact view hierarchy must be verified on the target iPhone.
-          To disable, turn off Enable NOVA Glass or uninstall the package from Sileo.
-          EOF
-          cd ../dist
-          zip -r NOVA-Glass-Messages-iOS12.zip NOVA-Glass-Messages-iOS12
-          shasum -a 256 NOVA-Glass-Messages-iOS12.zip > NOVA-Glass-Messages-iOS12.sha256
-
-      - name: Build optional Lock Screen, Control Center and Phone experience
-        run: |
-          brew install ffmpeg
-          python3 tools/generate_ringtone.py
-          ffmpeg -hide_banner -loglevel error -y -i dist/NOVA-Glass-Ringtone.wav -c:a aac -b:a 192k -t 30 -f ipod dist/NOVA-Glass-Ringtone.m4r
-          mkdir -p NOVAExperience/layout/Library/Ringtones
-          cp dist/NOVA-Glass-Ringtone.m4r "NOVAExperience/layout/Library/Ringtones/NOVA Glass.m4r"
-          cd NOVAExperience
-          export THEOS="$GITHUB_WORKSPACE/theos"
-          make clean
-          make package FINALPACKAGE=1
-          DEB="$(find packages -maxdepth 1 -name '*.deb' -print -quit)"
-          test -n "$DEB"
-          test "$(dpkg-deb -f "$DEB" Package)" = "com.nova.glass.experience"
-          test "$(dpkg-deb -f "$DEB" Version)" = "1.0.0"
-          test "$(dpkg-deb -f "$DEB" Architecture)" = "iphoneos-arm"
-          dpkg-deb -c "$DEB" | grep -F "Library/MobileSubstrate/DynamicLibraries/NOVAExperience.dylib"
-          dpkg-deb -c "$DEB" | grep -F "Library/Ringtones/NOVA Glass.m4r"
-          mkdir -p ../dist/NOVA-Glass-System-iOS12
-          cp "$DEB" ../dist/NOVA-Glass-System-iOS12/
-          cp README.md ../dist/NOVA-Glass-System-iOS12/
-          cd ../dist
-          zip -r NOVA-Glass-System-iOS12.zip NOVA-Glass-System-iOS12
-          shasum -a 256 NOVA-Glass-System-iOS12.zip > NOVA-Glass-System-iOS12.sha256
-
-      - name: Validate seasonal widget
+      - name: Validate transparent Home Screen and Lock Screen widget
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path("XenHTML/NOVA-Glass-Seasons/Wallpaper.html")
-          s=p.read_text(encoding="utf-8")
-          for token in ["spring","summer","autumn","winter","localStorage","Use automatic season","setInterval"]:
-              assert token in s, "missing seasonal feature: "+token
-          assert "com.apple.MobileSMS" not in s
-          print("PASS: four seasons, automatic/manual selection and isolated Xen HTML widget.")
+          files = {
+              "Wallpaper.html": Path("XenHTML/NOVA-Atmosphere/Wallpaper.html"),
+              "LockBackground.html": Path("XenHTML/NOVA-Atmosphere/LockBackground.html"),
+              "index.html": Path("XenHTML/NOVA-Atmosphere/index.html"),
+          }
+          for name, path in files.items():
+              assert path.is_file(), f"missing {name}"
+              source = path.read_text(encoding="utf-8")
+              for token in ["nova-atmosphere", "nova-fx-canvas", "drawSnow", "drawRain",
+                            "drawLeaves", "nova-sun-glow", "pointer-events:none",
+                            "requestAnimationFrame", "background:transparent"]:
+                  assert token in source, f"{name}: missing {token}"
+              assert "</html>" in source.lower()
+          assert files["Wallpaper.html"].read_bytes() == files["LockBackground.html"].read_bytes()
+          assert files["Wallpaper.html"].read_bytes() == files["index.html"].read_bytes()
+          control = Path("NOVAAtmosphere/control").read_text(encoding="utf-8")
+          assert "Package: com.nova.glass.atmosphere" in control
+          assert "Version: 2.0.0" in control
+          print("PASS: transparent four-effect widget for Home Screen, Lock Screen and Xen HTML 2.")
           PY
 
-      - name: Generate complete borderless glass theme
+      - name: Build rootful iOS DEB and ZIP
         run: |
-          python3 tools/build_theme.py
-          python3 tools/build_complete_artwork.py
-          python3 tools/build_seasonal_wallpapers.py
-          mkdir -p dist/NOVA-Glass-Complete-iOS12
-          cp -R "NOVA Glass.theme" dist/NOVA-Glass-Complete-iOS12/
-          mkdir -p dist/NOVA-Glass-Complete-iOS12/Optional-XenHTML
-          cp -R XenHTML/NOVA-Glass-Seasons dist/NOVA-Glass-Complete-iOS12/Optional-XenHTML/
-          cp -R XenHTML/NOVA-LockScreen dist/NOVA-Glass-Complete-iOS12/Optional-XenHTML/
-          cp dist/NOVA-Glass-Messages-iOS12/*.deb dist/NOVA-Glass-Complete-iOS12/ 2>/dev/null || true
-          cp dist/NOVA-Glass-System-iOS12/*.deb dist/NOVA-Glass-Complete-iOS12/ 2>/dev/null || true
-          cp dist/NOVA-Glass-Ringtone.m4r dist/NOVA-Glass-Complete-iOS12/
-          cat > dist/NOVA-Glass-Complete-iOS12/INSTALL.txt <<'EOF'
-          NOVA GLASS COMPLETE EDITION
-          Target: iPhone 5s / iOS 12.5.8 / rootful Amethyst + SnowBoard
-          Apply the icon theme in SnowBoard. Choose one of the included wallpapers.
-          Optional seasonal animation: install compatible Xen HTML for iOS 12, then copy
-          Optional-XenHTML/NOVA-Glass-Seasons to /var/mobile/Library/SBHTML/ and enable it.
-          The widget supports automatic seasons and manual Spring/Summer/Autumn/Winter selection.
-          Xen HTML is optional and is NOT installed by this theme. SnowBoard alone does not run HTML widgets.
-          The Messages tweak .deb includes selectable snow, rain, sunlight and falling-leaf atmosphere.
-          Open Settings > NOVA Messages to enable the effects you want.
-          NOVA Glass System Experience .deb is optional; it styles selected Lock Screen, Control Center and Phone UI surfaces.
-          NOVA-Glass-Ringtone.m4r is an original ringtone; select it in Settings > Sounds.
-          Optional-XenHTML/NOVA-LockScreen is a live clock/date widget; install a compatible Xen HTML release separately.
-          Private iOS 12 UI class matching is best-effort and requires testing on the target iPhone.
-          No SpringBoard tweak or Settings layout modification is included in the seasonal widget.
-          EOF
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev zip
+          mkdir -p dist
+          STAGE="$RUNNER_TEMP/nova-atmosphere"
+          mkdir -p "$STAGE/DEBIAN"
+          mkdir -p "$STAGE/var/mobile/Library/SBHTML/NOVA-Glass-Atmosphere"
+          mkdir -p "$STAGE/var/mobile/Library/LockHTML/NOVA-Glass-Atmosphere"
+          mkdir -p "$STAGE/var/mobile/Library/Widgets/Universal/NOVA-Glass-Atmosphere"
+          cp NOVAAtmosphere/control "$STAGE/DEBIAN/control"
+          cp XenHTML/NOVA-Atmosphere/Wallpaper.html "$STAGE/var/mobile/Library/SBHTML/NOVA-Glass-Atmosphere/Wallpaper.html"
+          cp XenHTML/NOVA-Atmosphere/LockBackground.html "$STAGE/var/mobile/Library/LockHTML/NOVA-Glass-Atmosphere/LockBackground.html"
+          cp XenHTML/NOVA-Atmosphere/index.html "$STAGE/var/mobile/Library/Widgets/Universal/NOVA-Glass-Atmosphere/index.html"
+          chmod 644 "$STAGE/DEBIAN/control"
+          find "$STAGE/var" -type d -exec chmod 755 {} \;
+          find "$STAGE/var" -type f -exec chmod 644 {} \;
+          dpkg-deb --root-owner-group --build "$STAGE" "dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb"
+          test "$(dpkg-deb -f dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb Package)" = "com.nova.glass.atmosphere"
+          test "$(dpkg-deb -f dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb Version)" = "2.0.0"
+          test "$(dpkg-deb -f dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb Architecture)" = "iphoneos-arm"
+          dpkg-deb -c dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb
+          cp -R XenHTML/NOVA-Atmosphere dist/NOVA-Glass-Atmosphere-iOS12
+          cp NOVAAtmosphere/README.md dist/NOVA-Glass-Atmosphere-iOS12/INSTALL.txt
+          cp NOVAAtmosphere/control dist/NOVA-Glass-Atmosphere-iOS12/control
           cd dist
-          zip -r -0 NOVA-Glass-Complete-iOS12.zip NOVA-Glass-Complete-iOS12
-          shasum -a 256 NOVA-Glass-Complete-iOS12.zip > NOVA-Glass-Complete-iOS12.sha256
-          ls -lh NOVA-Glass-Complete-iOS12.zip
+          zip -qr NOVA-Glass-Atmosphere-iOS12.zip NOVA-Glass-Atmosphere-iOS12
+          sha256sum com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb > NOVA-Glass-Atmosphere-iOS12.sha256
+          ls -lh com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb NOVA-Glass-Atmosphere-iOS12.zip
 
-      - name: Upload complete theme and Messages package
+      - name: Upload atmosphere package
         uses: actions/upload-artifact@v4
         with:
-          name: NOVA-Glass-Complete-iOS12-v5
+          name: NOVA-Glass-Atmosphere-iOS12
           path: |
-            dist/NOVA-Glass-Complete-iOS12.zip
-            dist/NOVA-Glass-Complete-iOS12.sha256
-            dist/NOVA-Glass-Messages-iOS12.zip
-            dist/NOVA-Glass-Messages-iOS12.sha256
-            dist/NOVA-Glass-System-iOS12.zip
-            dist/NOVA-Glass-System-iOS12.sha256
-            dist/NOVA-Glass-Ringtone.m4r
+            dist/com.nova.glass.atmosphere_2.0.0_iphoneos-arm.deb
+            dist/NOVA-Glass-Atmosphere-iOS12.zip
+            dist/NOVA-Glass-Atmosphere-iOS12.sha256
           if-no-files-found: error
           retention-days: 30
